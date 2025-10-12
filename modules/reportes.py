@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def reportes_basicos():
-    st.title("📊 Reportes Básicos de Calidad")
+    st.title("Reportes Básicos de Calidad")
     st.markdown("---")
     st.write("Visualización general de los controles realizados por línea de producción.")
 
@@ -24,6 +24,6 @@ def reportes_basicos():
     st.pyplot(fig)
 
 def dashboard_powerbi():
-    st.title("📈 Dashboards Power BI")
+    st.title("Dashboards Power BI")
     st.markdown("---")
     st.info("Aquí se integrarán los dashboards de Power BI (vinculación externa).")

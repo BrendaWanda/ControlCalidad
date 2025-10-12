@@ -1,7 +1,7 @@
 import streamlit as st
 
 def ver_registros():
-    st.title("🔎 Consultas de Registro de Control")
+    st.title("Consultas de Registro de Control")
     st.markdown("---")
 
     st.write("Filtrar registros por:")

@@ -4,7 +4,7 @@ import hashlib
 from database.db_connection import get_connection
 from PIL import Image
 
-# 🎨 Colores corporativos Gustossi
+# Colores corporativos Gustossi
 PRIMARY_COLOR = "#F4F8FC"
 ACCENT_COLOR = "#F22828"
 BACKGROUND_COLOR = "#110237C5"
@@ -37,11 +37,11 @@ def login():
         logo = Image.open("assets/logo_gustossi.jpg")
         st.image(logo, width=180)
     except Exception:
-        st.info("⚠️ Coloca tu logo en la carpeta: assets/logo_gustossi.png")
+        st.info("Coloca tu logo en la carpeta: assets/logo_gustossi.png")
 
     # --- Formulario de inicio de sesión ---
     st.markdown("---")
-    st.subheader("🔐 Iniciar Sesión")
+    st.subheader("Iniciar Sesión")
 
     usuario = st.text_input("Usuario", placeholder="Ingrese su usuario")
     contraseña = st.text_input("Contraseña", type="password", placeholder="Ingrese su contraseña")
@@ -62,7 +62,7 @@ def login():
 
             if data:
                 st.session_state["usuario"] = data
-                st.success(f"✅ Bienvenido {data['nombre']} ({data['nombreRol']})")
+                st.success(f"Bienvenido {data['nombre']} ({data['nombreRol']})")
 
                 # --- Redirección según el rol ---
                 rol = data["nombreRol"].lower()
@@ -73,9 +73,9 @@ def login():
                 elif "gerente" in rol or "administrador" in rol:
                     st.session_state["menu_actual"] = "gerente"
 
-                # 🔁 Redirigir a la vista correspondiente
+                # Redirigir a la vista correspondiente
                 st.rerun()
             else:
-                st.error("❌ Usuario o contraseña incorrectos o cuenta inactiva.")
+                st.error("Usuario o contraseña incorrectos o cuenta inactiva.")
         else:
-            st.warning("⚠️ Complete ambos campos antes de continuar.")
+            st.warning("Complete ambos campos antes de continuar.")
