@@ -1,5 +1,8 @@
 import streamlit as st
-from modules import usuarios, controles, consultas, reportes, estandares, ordenes, gestion_usuarios, dashboard_powerbi
+from modules import (
+    usuarios, controles, consultas, reportes, estandares,
+    ordenes, gestion_usuarios, dashboard_powerbi, lineas
+)
 
 # ======================================================
 # FUNCIÓN PRINCIPAL
@@ -7,7 +10,7 @@ from modules import usuarios, controles, consultas, reportes, estandares, ordene
 def main():
     # Si no hay usuario logueado → mostrar login
     if "usuario" not in st.session_state:
-        usuarios.login()    
+        usuarios.login()
         return
 
     # Si ya hay usuario en sesión
@@ -18,6 +21,7 @@ def main():
     st.sidebar.image("assets/logo_gustossi.jpg", width=120)
     st.sidebar.markdown(f"**{usuario['nombre']} {usuario['apellido']}**")
     st.sidebar.markdown(f"Rol: **{usuario['nombreRol']}**")
+
     if st.sidebar.button("Cerrar Sesión", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -58,7 +62,8 @@ def menu_supervisor():
     opciones = st.sidebar.radio("Seleccione una opción", [
         "Consultas de Registro",
         "Reportes Básicos",
-        "Dashboards Power BI"
+        "Dashboards Power BI",
+        "Órdenes de Trabajo"
     ])
 
     if opciones == "Consultas de Registro":
@@ -67,28 +72,39 @@ def menu_supervisor():
         reportes.reportes_basicos()
     elif opciones == "Dashboards Power BI":
         reportes.dashboard_powerbi()
+    elif opciones == "Órdenes de Trabajo":
+        ordenes.gestionar_ordenes()
 
 # ======================================================
 # MENÚ GERENTE DE PLANTA
 # ======================================================
 def menu_gerente():
     st.sidebar.title("Menú Gerente de Planta")
+
     opciones = st.sidebar.radio("Seleccione una opción", [
         "Configuración de Parámetros de Calidad",
         "Gestión de Usuarios y Roles",
         "Órdenes de Trabajo",
+        "Líneas de Producción",
         "Consultas y Reportes",
         "Dashboards Power BI"
     ])
 
     if opciones == "Configuración de Parámetros de Calidad":
         estandares.configurar_parametros()
+
     elif opciones == "Gestión de Usuarios y Roles":
         gestion_usuarios.gestion_usuarios()
+
     elif opciones == "Órdenes de Trabajo":
         ordenes.gestionar_ordenes()
+
+    elif opciones == "Líneas de Producción":
+        lineas.gestionar_lineas() 
+
     elif opciones == "Consultas y Reportes":
         consultas.ver_registros()
+
     elif opciones == "Dashboards Power BI":
         dashboard_powerbi.dashboard_powerbi()
 
@@ -97,3 +113,4 @@ def menu_gerente():
 # ======================================================
 if __name__ == "__main__":
     main()
+

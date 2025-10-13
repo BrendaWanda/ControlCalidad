@@ -41,7 +41,7 @@ def gestion_usuarios():
             st.info("No hay usuarios registrados en el sistema.")
 
     # =====================================================
-    # ➕ AGREGAR NUEVO USUARIO
+    # AGREGAR NUEVO USUARIO
     # =====================================================
     elif opcion == "Agregar nuevo usuario":
         with st.form("form_agregar_usuario", clear_on_submit=True):
