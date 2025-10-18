@@ -4,9 +4,7 @@ from modules import (
     ordenes, gestion_usuarios, dashboard_powerbi, lineas
 )
 
-# ======================================================
 # FUNCIÓN PRINCIPAL
-# ======================================================
 def main():
     # Si no hay usuario logueado → mostrar login
     if "usuario" not in st.session_state:
@@ -17,7 +15,7 @@ def main():
     usuario = st.session_state["usuario"]
     rol = st.session_state.get("menu_actual", "").lower()
 
-    # --- Barra lateral de sesión ---
+    # Barra lateral de sesión 
     st.sidebar.image("assets/logo_gustossi.jpg", width=120)
     st.sidebar.markdown(f"**{usuario['nombre']} {usuario['apellido']}**")
     st.sidebar.markdown(f"Rol: **{usuario['nombreRol']}**")
@@ -26,7 +24,7 @@ def main():
         st.session_state.clear()
         st.rerun()
 
-    # --- Redirigir al menú correspondiente según rol ---
+    # Redirigir al menú correspondiente según rol
     if rol == "operario":
         menu_operario()
     elif rol == "supervisor":
@@ -36,9 +34,7 @@ def main():
     else:
         st.error("Rol no reconocido o sin permisos de acceso.")
 
-# ======================================================
 # MENÚ OPERARIO
-# ======================================================
 def menu_operario():
     st.sidebar.title("Menú Operario")
     opciones = st.sidebar.radio("Seleccione una opción", [
@@ -54,9 +50,7 @@ def menu_operario():
     elif opciones == "Confirmar Registros":
         controles.confirmar_registros()
 
-# ======================================================
 # MENÚ SUPERVISOR
-# ======================================================
 def menu_supervisor():
     st.sidebar.title("Menú Supervisor")
     opciones = st.sidebar.radio("Seleccione una opción", [
@@ -75,9 +69,7 @@ def menu_supervisor():
     elif opciones == "Órdenes de Trabajo":
         ordenes.gestionar_ordenes()
 
-# ======================================================
 # MENÚ GERENTE DE PLANTA
-# ======================================================
 def menu_gerente():
     st.sidebar.title("Menú Gerente de Planta")
 
@@ -108,9 +100,7 @@ def menu_gerente():
     elif opciones == "Dashboards Power BI":
         dashboard_powerbi.dashboard_powerbi()
 
-# ======================================================
 # EJECUCIÓN DEL SISTEMA
-# ======================================================
 if __name__ == "__main__":
     main()
 

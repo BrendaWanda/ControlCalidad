@@ -6,9 +6,7 @@ def gestionar_lineas():
     st.title("Gestión de Líneas de Producción")
     st.markdown("---")
 
-    # ===================================
     # Mostrar todas las líneas existentes
-    # ===================================
     conn = get_connection()
     df = pd.read_sql("SELECT idLinea AS ID, nombreLinea AS 'Línea de Producción' FROM LineaProduccion", conn)
     conn.close()
@@ -18,9 +16,7 @@ def gestionar_lineas():
 
     st.markdown("---")
 
-    # ===================================
     # Agregar nueva línea
-    # ===================================
     st.subheader("Agregar Nueva Línea")
     with st.form("form_linea", clear_on_submit=True):
         nombre = st.text_input("Nombre de la línea", placeholder="Ej: Línea de Galletas de Coco")
@@ -39,9 +35,7 @@ def gestionar_lineas():
 
     st.markdown("---")
 
-    # ===================================
     # Eliminar línea
-    # ===================================
     st.subheader("Eliminar Línea de Producción")
     if not df.empty:
         linea_sel = st.selectbox("Seleccione una línea para eliminar", df["Línea de Producción"])

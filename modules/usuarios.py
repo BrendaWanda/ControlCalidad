@@ -4,14 +4,12 @@ import hashlib
 from database.db_connection import get_connection
 from PIL import Image
 
-# Colores corporativos Gustossi
+# Colores
 PRIMARY_COLOR = "#F4F8FC"
 ACCENT_COLOR = "#F22828"
 BACKGROUND_COLOR = "#110237C5"
 
-# ==============================================
 # FUNCIÓN DE LOGIN
-# ==============================================
 def login():
     st.set_page_config(
         page_title="Sistema de Control de Calidad - Gustossi",
@@ -19,7 +17,7 @@ def login():
         layout="centered"
     )
 
-    # --- Encabezado con título y logo ---
+    # Encabezado con título y logo
     st.markdown(f"""
         <div style="text-align:center; background-color:{BACKGROUND_COLOR};
                     padding:20px; border-radius:12px; box-shadow: 0px 2px 8px rgba(0,0,0,0.1);">
@@ -32,14 +30,14 @@ def login():
         </div>
     """, unsafe_allow_html=True)
 
-    # --- Logo debajo del título ---
+    # Logo debajo del título
     try:
         logo = Image.open("assets/logo_gustossi.jpg")
         st.image(logo, width=180)
     except Exception:
         st.info("Coloca tu logo en la carpeta: assets/logo_gustossi.png")
 
-    # --- Formulario de inicio de sesión ---
+    # Formulario de inicio de sesión
     st.markdown("---")
     st.subheader("Iniciar Sesión")
 
@@ -64,7 +62,7 @@ def login():
                 st.session_state["usuario"] = data
                 st.success(f"Bienvenido {data['nombre']} ({data['nombreRol']})")
 
-                # --- Redirección según el rol ---
+                # Redirección según el rol
                 rol = data["nombreRol"].lower()
                 if "operario" in rol:
                     st.session_state["menu_actual"] = "operario"
