@@ -97,12 +97,12 @@ def obtener_detalles(idOrden):
 # =====================================================
 
 def gestionar_ordenes():
-    st.title("📋 REGISTRO DE ÓRDENES DE PRODUCCIÓN - Gustossi S.R.L.")
+    st.title("REGISTRO DE ÓRDENES DE PRODUCCIÓN - Gustossi S.R.L.")
     st.markdown("---")
 
     lineas = obtener_lineas()
     if not lineas:
-        st.warning("⚠️ No existen líneas de producción registradas.")
+        st.warning("No existen líneas de producción registradas.")
         return
 
     menu = st.sidebar.radio("Menú de Órdenes", ["Registrar Nueva Orden", "Consultar Órdenes"])
@@ -111,7 +111,7 @@ def gestionar_ordenes():
     # SECCIÓN 1: REGISTRO DE NUEVA ORDEN
     # =====================================================
     if menu == "Registrar Nueva Orden":
-        st.subheader("🆕 Nueva Orden de Producción")
+        st.subheader("Nueva Orden de Producción")
 
         linea_nombre = st.selectbox("Línea de Producción", ["— Seleccionar Línea —"] + [l[1] for l in lineas])
         if linea_nombre == "— Seleccionar Línea —":
@@ -127,20 +127,20 @@ def gestionar_ordenes():
 
         st.write(f"**Semana:** {semana} | **Día:** {dia}")
 
-        if st.button("💾 Crear Orden de Producción"):
+        if st.button("Crear Orden de Producción"):
             if not codigoorden:
-                st.warning("⚠️ Debe ingresar un código de orden.")
+                st.warning("Debe ingresar un código de orden.")
             else:
                 id_orden = insertar_orden(codigoorden, fecha, semana, dia, turno, idLinea)
                 st.session_state["orden_activa"] = id_orden
                 st.session_state["codigo_activo"] = codigoorden
-                st.success(f"✅ Orden **{codigoorden}** creada para la línea **{linea_nombre}** en turno **{turno}**.")
+                st.success(f"Orden **{codigoorden}** creada para la línea **{linea_nombre}** en turno **{turno}**.")
                 st.rerun()
 
         if "orden_activa" in st.session_state:
             idOrden = st.session_state["orden_activa"]
             codigo_activo = st.session_state["codigo_activo"]
-            st.markdown(f"### ➕ Agregar Productos / Detalles de Producción — Orden {codigo_activo}")
+            st.markdown(f"### Agregar Productos / Detalles de Producción — Orden {codigo_activo}")
 
             with st.form("detalle_form", clear_on_submit=True):
                 descripcionProducto = st.text_input("Descripción del Producto", placeholder="Ej: Galleta de Coco 90g")
@@ -161,54 +161,54 @@ def gestionar_ordenes():
 
                 if agregar:
                     if not descripcionProducto:
-                        st.warning("⚠️ Debe ingresar la descripción del producto.")
+                        st.warning("Debe ingresar la descripción del producto.")
                     else:
                         insertar_detalle(idOrden, descripcionProducto, receta, fechaVencimiento, lote, plan, observacion,
                                         presentacion, rendimientoReceta, rendimientoCajasB,
                                         produccionUnidades, produccionCajasB, descripcion, cantidad)
-                        st.success(f"✅ Detalle del producto **'{descripcionProducto}'** agregado correctamente.")
+                        st.success(f"Detalle del producto **'{descripcionProducto}'** agregado correctamente.")
                         st.rerun()
 
-            st.markdown("#### 📦 Detalles registrados en esta orden:")
+            st.markdown("#### Detalles registrados en esta orden:")
             detalles_df = obtener_detalles(idOrden)
             if not detalles_df.empty:
                 st.dataframe(detalles_df, use_container_width=True)
             else:
-                st.info("ℹ️ No hay productos registrados aún para esta orden.")
+                st.info("ℹNo hay productos registrados aún para esta orden.")
 
     # =====================================================
     # SECCIÓN 2: CONSULTA DE ÓRDENES
     # =====================================================
     elif menu == "Consultar Órdenes":
-        st.subheader("🔍 Consultar Órdenes de Producción")
+        st.subheader("Consultar Órdenes de Producción")
         st.markdown("Filtra las órdenes por fecha, semana, día, turno o línea de producción.")
         st.markdown("---")
 
         df_ordenes = obtener_ordenes()
 
         if df_ordenes.empty:
-            st.info("ℹ️ No hay órdenes registradas.")
+            st.info("ℹNo hay órdenes registradas.")
             return
 
         df_ordenes["fecha"] = pd.to_datetime(df_ordenes["fecha"]).dt.date
 
-        # 🎛️ Controles de filtro (sin errores de None)
+        # Controles de filtro (sin errores de None)
         col1, col2, col3 = st.columns(3)
         with col1:
-            fecha_filtro = st.date_input("📅 Fecha específica", value=date.today())
+            fecha_filtro = st.date_input("Fecha específica", value=date.today())
             usar_fecha = st.checkbox("Usar filtro de fecha", value=False)
         with col2:
-            semana_filtro = st.number_input("📆 Semana ISO", min_value=0, max_value=53, step=1, value=0)
+            semana_filtro = st.number_input("Semana ISO", min_value=0, max_value=53, step=1, value=0)
         with col3:
-            dia_filtro = st.selectbox("🗓️ Día de la Semana", ["Todos", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"])
+            dia_filtro = st.selectbox("Día de la Semana", ["Todos", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"])
 
         col4, col5 = st.columns(2)
         with col4:
-            turno_filtro = st.selectbox("🕐 Turno", ["Todos", "T1-8H", "T2-8H", "T3-8H"])
+            turno_filtro = st.selectbox("Turno", ["Todos", "T1-8H", "T2-8H", "T3-8H"])
         with col5:
-            linea_filtro = st.selectbox("🏭 Línea de Producción", ["Todas"] + [l[1] for l in lineas])
+            linea_filtro = st.selectbox("Línea de Producción", ["Todas"] + [l[1] for l in lineas])
 
-        codigo_buscar = st.text_input("🔤 Buscar por Código de Orden", placeholder="Ej: OP-2025-0109")
+        codigo_buscar = st.text_input("Buscar por Código de Orden", placeholder="Ej: OP-2025-0109")
 
         df_filtrado = df_ordenes.copy()
 
@@ -225,11 +225,11 @@ def gestionar_ordenes():
         if codigo_buscar:
             df_filtrado = df_filtrado[df_filtrado["codigoOrden"].str.contains(codigo_buscar, case=False, na=False)]
 
-        st.markdown("### 📋 Órdenes encontradas")
+        st.markdown("### Órdenes encontradas")
         if not df_filtrado.empty:
             st.dataframe(df_filtrado, use_container_width=True)
         else:
-            st.info("⚠️ No se encontraron órdenes con los criterios seleccionados.")
+            st.info("No se encontraron órdenes con los criterios seleccionados.")
 
 
 # =====================================================

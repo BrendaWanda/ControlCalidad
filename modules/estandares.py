@@ -97,7 +97,7 @@ def eliminar_parametro(id_parametro):
 # ==============================================================
 
 def configurar_parametros():
-    st.title("⚙️ Configuración de Estándares de Calidad - Gustossi S.R.L.")
+    st.title("Configuración de Estándares de Calidad - Gustossi S.R.L.")
     st.markdown("---")
 
     menu = st.sidebar.radio("Menú de Configuración", [
@@ -109,7 +109,7 @@ def configurar_parametros():
     # SECCIÓN 1: TIPOS DE CONTROL
     # ==============================================================
     if menu == "Tipos de Control":
-        st.subheader("🧾 Gestión de Tipos de Control")
+        st.subheader("Gestión de Tipos de Control")
 
         lineas = obtener_lineas_produccion()
         tipos = obtener_tipos_control()
@@ -124,29 +124,29 @@ def configurar_parametros():
         # AGREGAR NUEVO TIPO DE CONTROL
         # --------------------------
         st.markdown("---")
-        st.subheader("➕ Agregar Nuevo Tipo de Control")
+        st.subheader("Agregar Nuevo Tipo de Control")
 
         with st.form("form_tipo_control", clear_on_submit=True):
             nombre = st.text_input("Nombre del Tipo de Control", placeholder="Ej: Producto en Proceso")
             descripcion = st.text_area("Descripción", placeholder="Describe el tipo de control (ej. inspección visual, físico-química, etc.)")
             opciones_lineas = ["— Seleccionar Línea —"] + [l[1] for l in lineas]
             linea_nombre = st.selectbox("Línea de Producción", opciones_lineas)
-            guardar = st.form_submit_button("💾 Guardar Tipo")
+            guardar = st.form_submit_button("Guardar Tipo")
 
             if guardar:
                 if not nombre or linea_nombre == "— Seleccionar Línea —":
-                    st.warning("⚠️ Ingrese un nombre y seleccione una línea de producción.")
+                    st.warning("Ingrese un nombre y seleccione una línea de producción.")
                 else:
                     id_linea = next(l[0] for l in lineas if l[1] == linea_nombre)
                     insertar_tipo_control(nombre, descripcion, id_linea)
-                    st.success(f"✅ Tipo de control **{nombre}** agregado correctamente para la línea **{linea_nombre}**.")
+                    st.success(f"Tipo de control **{nombre}** agregado correctamente para la línea **{linea_nombre}**.")
                     st.rerun()
 
         # --------------------------
         # EDITAR O ELIMINAR TIPO DE CONTROL
         # --------------------------
         st.markdown("---")
-        st.subheader("✏️ Editar o Eliminar Tipo de Control")
+        st.subheader("Editar o Eliminar Tipo de Control")
 
         if tipos:
             opciones_display = ["— Seleccionar Tipo de Control —"] + [
@@ -169,36 +169,36 @@ def configurar_parametros():
                     nueva_descripcion = st.text_area("Nueva descripción", value=desc_actual)
                     nueva_linea = st.selectbox("Línea asociada", lineas_nombres, index=index_linea)
                     id_linea = next(l[0] for l in lineas if l[1] == nueva_linea)
-                    guardar_cambio = st.form_submit_button("💾 Guardar Cambios")
+                    guardar_cambio = st.form_submit_button("Guardar Cambios")
 
                     if guardar_cambio:
                         actualizar_tipo_control(id_tipo, nuevo_nombre, nueva_descripcion, id_linea)
-                        st.success(f"✅ Tipo de control **{nuevo_nombre}** actualizado correctamente.")
+                        st.success(f"Tipo de control **{nuevo_nombre}** actualizado correctamente.")
                         st.rerun()
 
                 st.markdown("---")
-                st.subheader("🗑️ Eliminar Tipo de Control")
+                st.subheader("Eliminar Tipo de Control")
 
                 eliminar_confirm = st.checkbox(f"Confirmar eliminación de '{tipo_nombre} — {linea_actual}' antes de continuar")
-                eliminar_boton = st.button("🗑️ Eliminar Tipo de Control")
+                eliminar_boton = st.button("Eliminar Tipo de Control")
 
                 if eliminar_boton:
                     if eliminar_confirm:
                         eliminar_tipo_control(id_tipo)
-                        st.success(f"✅ Tipo de control **{tipo_nombre} — {linea_actual}** eliminado correctamente.")
+                        st.success(f"Tipo de control **{tipo_nombre} — {linea_actual}** eliminado correctamente.")
                         st.rerun()
                     else:
-                        st.warning("⚠️ Debes confirmar antes de eliminar.")
+                        st.warning("Debes confirmar antes de eliminar.")
 
     # ==============================================================
     # SECCIÓN 2: PARÁMETROS DE CALIDAD
     # ==============================================================
     elif menu == "Parámetros de Calidad":
-        st.subheader("📊 Gestión de Parámetros de Calidad")
+        st.subheader("Gestión de Parámetros de Calidad")
 
         tipos = obtener_tipos_control()
         if not tipos:
-            st.warning("⚠️ Primero registre tipos de control antes de añadir parámetros.")
+            st.warning("Primero registre tipos de control antes de añadir parámetros.")
             return
 
         opciones_display = ["— Seleccionar Tipo de Control —"] + [
@@ -227,7 +227,7 @@ def configurar_parametros():
         # AGREGAR NUEVO PARÁMETRO
         # --------------------------
         st.markdown("---")
-        st.subheader("➕ Agregar Nuevo Parámetro")
+        st.subheader("Agregar Nuevo Parámetro")
 
         with st.form("form_parametro", clear_on_submit=True):
             nombre = st.text_input("Nombre del Parámetro", placeholder="Ej: Humedad, Peso, Textura")
@@ -235,14 +235,14 @@ def configurar_parametros():
             unidad = st.text_input("Unidad de Medida", placeholder="Ej: %, g, mm")
             lim_inf = st.number_input("Límite Inferior", step=0.01, value=0.00)
             lim_sup = st.number_input("Límite Superior", step=0.01, value=0.00)
-            guardar = st.form_submit_button("💾 Guardar Parámetro")
+            guardar = st.form_submit_button("Guardar Parámetro")
 
             if guardar:
                 if not nombre:
-                    st.warning("⚠️ Debes ingresar un nombre para el parámetro.")
+                    st.warning("Debes ingresar un nombre para el parámetro.")
                 else:
                     insertar_parametro(nombre, descripcion, unidad, lim_inf, lim_sup, id_tipo)
-                    st.success(f"✅ Parámetro **{nombre}** agregado correctamente al tipo **{tipo_nombre}** (Línea: {linea_nombre}).")
+                    st.success(f"Parámetro **{nombre}** agregado correctamente al tipo **{tipo_nombre}** (Línea: {linea_nombre}).")
                     st.rerun()
 
         # --------------------------
@@ -250,13 +250,13 @@ def configurar_parametros():
         # --------------------------
         if not df.empty:
             st.markdown("---")
-            st.subheader("🗑️ Eliminar Parámetro Existente")
+            st.subheader("Eliminar Parámetro Existente")
             eliminar_nombre = st.selectbox("Seleccionar parámetro a eliminar", ["— Seleccionar Parámetro —"] + list(df["nombreParametro"]))
             if eliminar_nombre != "— Seleccionar Parámetro —":
                 id_eliminar = int(df.loc[df["nombreParametro"] == eliminar_nombre, "idParametro"].iloc[0])
                 if st.button("Eliminar Parámetro"):
                     eliminar_parametro(id_eliminar)
-                    st.success(f"✅ Parámetro **{eliminar_nombre}** eliminado correctamente.")
+                    st.success(f"Parámetro **{eliminar_nombre}** eliminado correctamente.")
                     st.rerun()
 
 

@@ -7,7 +7,7 @@ import hashlib
 # =============================================================
 
 def gestion_usuarios():
-    st.title("👤 Gestión de Usuarios y Roles")
+    st.title("Gestión de Usuarios y Roles")
     st.markdown("---")
     st.write("El **Gerente de Planta** puede administrar las cuentas de usuario del sistema Gustossi S.R.L.")
 
@@ -46,7 +46,7 @@ def gestion_usuarios():
     # =============================================================
     elif opcion == "Agregar nuevo usuario":
         with st.form("form_agregar_usuario", clear_on_submit=True):
-            st.subheader("➕ Registrar nuevo usuario")
+            st.subheader("Registrar nuevo usuario")
 
             col1, col2 = st.columns(2)
             with col1:
@@ -59,11 +59,11 @@ def gestion_usuarios():
                 rol = st.selectbox("Rol asignado", opciones_roles)
                 contraseña = st.text_input("Contraseña", type="password")
 
-            enviar = st.form_submit_button("💾 Guardar Usuario")
+            enviar = st.form_submit_button("Guardar Usuario")
 
             if enviar:
                 if not (nombre and usuario and contraseña) or rol == "— Seleccionar Rol —":
-                    st.warning("⚠️ Complete los campos obligatorios y seleccione un rol válido.")
+                    st.warning("Complete los campos obligatorios y seleccione un rol válido.")
                 else:
                     conn = get_connection()
                     cursor = conn.cursor()
@@ -75,7 +75,7 @@ def gestion_usuarios():
                     """, (nombre, apellido, correo, usuario, hashed, rol))
                     conn.commit()
                     conn.close()
-                    st.success(f"✅ Usuario **'{usuario}'** agregado correctamente como **{rol}**.")
+                    st.success(f"Usuario **'{usuario}'** agregado correctamente como **{rol}**.")
 
     # =============================================================
     # EDITAR USUARIO EXISTENTE
@@ -107,7 +107,7 @@ def gestion_usuarios():
 
                 if data:
                     with st.form("editar_usuario", clear_on_submit=True):
-                        st.subheader(f"✏️ Editar Usuario: {seleccionado}")
+                        st.subheader(f"Editar Usuario: {seleccionado}")
                         nombre = st.text_input("Nombre", value=data["nombre"])
                         apellido = st.text_input("Apellido", value=data["apellido"])
                         correo = st.text_input("Correo", value=data["correo"])
@@ -115,11 +115,11 @@ def gestion_usuarios():
                         rol = st.selectbox("Rol", roles_posibles,
                             index=roles_posibles.index(data["nombreRol"]) if data["nombreRol"] in roles_posibles else 0)
                         nueva_contra = st.text_input("Nueva contraseña (opcional)", type="password")
-                        guardar = st.form_submit_button("💾 Guardar cambios")
+                        guardar = st.form_submit_button("Guardar cambios")
 
                         if guardar:
                             if rol == "— Seleccionar Rol —":
-                                st.warning("⚠️ Seleccione un rol válido antes de continuar.")
+                                st.warning("Seleccione un rol válido antes de continuar.")
                             else:
                                 conn2 = get_connection()
                                 cursor2 = conn2.cursor()
@@ -140,11 +140,11 @@ def gestion_usuarios():
                                     """, (nombre, apellido, correo, rol, idUsuario))
                                 conn2.commit()
                                 conn2.close()
-                                st.success(f"✅ Usuario **'{seleccionado}'** actualizado correctamente.")
+                                st.success(f"Usuario **'{seleccionado}'** actualizado correctamente.")
                 else:
-                    st.error("❌ No se encontró la información del usuario seleccionado.")
+                    st.error("No se encontró la información del usuario seleccionado.")
         else:
-            st.info("ℹ️ No hay usuarios registrados para editar.")
+            st.info("ℹNo hay usuarios registrados para editar.")
 
     # =============================================================
     # ACTIVAR / DESACTIVAR USUARIO
@@ -167,9 +167,9 @@ def gestion_usuarios():
                 if st.button(f"{etiqueta} usuario", use_container_width=True):
                     cursor.execute("UPDATE Usuario SET activo=%s WHERE usuario=%s", (nuevo_estado, seleccionado))
                     conn.commit()
-                    st.success(f"✅ Usuario **'{seleccionado}'** ahora está {'activo' if nuevo_estado == 1 else 'inactivo'}.")
+                    st.success(f"Usuario **'{seleccionado}'** ahora está {'activo' if nuevo_estado == 1 else 'inactivo'}.")
         else:
-            st.info("ℹ️ No hay usuarios para modificar estado.")
+            st.info("ℹNo hay usuarios para modificar estado.")
         cursor.close()
         conn.close()
 

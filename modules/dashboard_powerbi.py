@@ -1,7 +1,7 @@
 import streamlit as st
 
 def dashboard_powerbi():
-    st.title("📊 Dashboard Power BI - Indicadores de Calidad")
+    st.title("Dashboard Power BI - Indicadores de Calidad")
     st.markdown("---")
     st.write("Visualización de los indicadores de desempeño y defectos más frecuentes.")
 
@@ -15,5 +15,5 @@ def dashboard_powerbi():
                 frameborder="0" allowFullScreen="true"></iframe>
     """, unsafe_allow_html=True)
 
-    st.markdown("🔗 Si prefieres, también puedes abrirlo en una nueva pestaña:")
+    st.markdown("Si prefieres, también puedes abrirlo en una nueva pestaña:")
     st.link_button("Abrir Dashboard en Power BI", "https://app.powerbi.com/groups/me/reports")
