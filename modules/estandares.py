@@ -1,3 +1,4 @@
+# Código corregido con indentación adecuada y estructura ordenada
 import streamlit as st
 import pandas as pd
 from database.db_connection import get_connection
@@ -63,7 +64,8 @@ def eliminar_tipo_control(id_tipo):
 def obtener_parametros_por_tipo(id_tipo):
     conn = get_connection()
     query = """
-        SELECT idParametro, nombreParametro, descripcion, unidadMedida, limiteInferior, limiteSuperior
+        SELECT idParametro, nombreParametro, descripcion, unidadMedida,
+               limiteInferior, limiteSuperior, tipoParametro
         FROM ParametroCalidad
         WHERE idTipoControl = %s
         ORDER BY nombreParametro;
@@ -73,13 +75,14 @@ def obtener_parametros_por_tipo(id_tipo):
     return df
 
 
-def insertar_parametro(nombre, descripcion, unidad, lim_inf, lim_sup, id_tipo):
+def insertar_parametro(nombre, descripcion, unidad, lim_inf, lim_sup, tipo_parametro, id_tipo):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO ParametroCalidad (nombreParametro, descripcion, unidadMedida, limiteInferior, limiteSuperior, idTipoControl)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (nombre, descripcion, unidad, lim_inf, lim_sup, id_tipo))
+        INSERT INTO ParametroCalidad 
+        (nombreParametro, descripcion, unidadMedida, limiteInferior, limiteSuperior, tipoParametro, idTipoControl)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (nombre, descripcion, unidad, lim_inf, lim_sup, tipo_parametro, id_tipo))
     conn.commit()
     conn.close()
 
@@ -88,6 +91,23 @@ def eliminar_parametro(id_parametro):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM ParametroCalidad WHERE idParametro = %s", (id_parametro,))
+    conn.commit()
+    conn.close()
+
+
+def actualizar_parametro(id_parametro, nombre, descripcion, unidad, lim_inf, lim_sup, tipo_parametro):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE ParametroCalidad
+        SET nombreParametro = %s,
+            descripcion = %s,
+            unidadMedida = %s,
+            limiteInferior = %s,
+            limiteSuperior = %s,
+            tipoParametro = %s
+        WHERE idParametro = %s
+    """, (nombre, descripcion, unidad, lim_inf, lim_sup, tipo_parametro, id_parametro))
     conn.commit()
     conn.close()
 
@@ -120,143 +140,189 @@ def configurar_parametros():
         else:
             st.info("No hay tipos de control registrados aún.")
 
-        # --------------------------
-        # AGREGAR NUEVO TIPO DE CONTROL
-        # --------------------------
         st.markdown("---")
         st.subheader("Agregar Nuevo Tipo de Control")
 
         with st.form("form_tipo_control", clear_on_submit=True):
-            nombre = st.text_input("Nombre del Tipo de Control", placeholder="Ej: Producto en Proceso")
-            descripcion = st.text_area("Descripción", placeholder="Describe el tipo de control (ej. inspección visual, físico-química, etc.)")
-            opciones_lineas = ["— Seleccionar Línea —"] + [l[1] for l in lineas]
-            linea_nombre = st.selectbox("Línea de Producción", opciones_lineas)
+            nombre = st.text_input("Nombre del Tipo de Control")
+            descripcion = st.text_area("Descripción")
+            opciones = ["— Seleccionar Línea —"] + [l[1] for l in lineas]
+            linea_nombre = st.selectbox("Línea de Producción", opciones)
+
             guardar = st.form_submit_button("Guardar Tipo")
 
             if guardar:
-                if not nombre or linea_nombre == "— Seleccionar Línea —":
-                    st.warning("Ingrese un nombre y seleccione una línea de producción.")
+                if linea_nombre == "— Seleccionar Línea —":
+                    st.warning("Seleccione una línea válida.")
                 else:
                     id_linea = next(l[0] for l in lineas if l[1] == linea_nombre)
                     insertar_tipo_control(nombre, descripcion, id_linea)
-                    st.success(f"Tipo de control **{nombre}** agregado correctamente para la línea **{linea_nombre}**.")
+                    st.success("Tipo de control agregado.")
                     st.rerun()
 
-        # --------------------------
-        # EDITAR O ELIMINAR TIPO DE CONTROL
-        # --------------------------
+        # Editar y eliminar
         st.markdown("---")
         st.subheader("Editar o Eliminar Tipo de Control")
 
         if tipos:
-            opciones_display = ["— Seleccionar Tipo de Control —"] + [
-                f"{t[1]} — {t[3]}" if t[3] else t[1] for t in tipos
+            opciones_display = ["— Seleccionar Tipo —"] + [
+                f"{t[1]} — {t[3]}" for t in tipos
             ]
-            opcion_sel = st.selectbox("Seleccionar Tipo de Control", opciones_display)
+            sel = st.selectbox("Seleccionar", opciones_display)
 
-            if opcion_sel != "— Seleccionar Tipo de Control —":
-                tipo_data = tipos[opciones_display.index(opcion_sel) - 1]
-                id_tipo = tipo_data[0]
-                tipo_nombre = tipo_data[1]
-                desc_actual = tipo_data[2]
-                linea_actual = tipo_data[3]
+            if sel != "— Seleccionar Tipo —":
+                idx = opciones_display.index(sel) - 1
+                tipo = tipos[idx]
+
+                id_tipo = tipo[0]
+                nombre_t = tipo[1]
+                desc_t = tipo[2]
+                linea_t = tipo[3]
 
                 lineas_nombres = [l[1] for l in lineas]
-                index_linea = lineas_nombres.index(linea_actual) if linea_actual in lineas_nombres else 0
+                idx_linea = lineas_nombres.index(linea_t)
 
-                with st.form("editar_tipo"):
-                    nuevo_nombre = st.text_input("Nuevo nombre", value=tipo_nombre)
-                    nueva_descripcion = st.text_area("Nueva descripción", value=desc_actual)
-                    nueva_linea = st.selectbox("Línea asociada", lineas_nombres, index=index_linea)
-                    id_linea = next(l[0] for l in lineas if l[1] == nueva_linea)
-                    guardar_cambio = st.form_submit_button("Guardar Cambios")
+                with st.form("edit_tipo"):
+                    nuevo_nombre = st.text_input("Nuevo nombre", value=nombre_t)
+                    nueva_desc = st.text_area("Descripción", value=desc_t)
+                    nueva_linea = st.selectbox("Línea", lineas_nombres, index=idx_linea)
 
-                    if guardar_cambio:
-                        actualizar_tipo_control(id_tipo, nuevo_nombre, nueva_descripcion, id_linea)
-                        st.success(f"Tipo de control **{nuevo_nombre}** actualizado correctamente.")
+                    guardar = st.form_submit_button("Guardar Cambios")
+
+                    if guardar:
+                        id_linea = next(l[0] for l in lineas if l[1] == nueva_linea)
+                        actualizar_tipo_control(id_tipo, nuevo_nombre, nueva_desc, id_linea)
+                        st.success("Actualizado correctamente.")
                         st.rerun()
 
-                st.markdown("---")
-                st.subheader("Eliminar Tipo de Control")
-
-                eliminar_confirm = st.checkbox(f"Confirmar eliminación de '{tipo_nombre} — {linea_actual}' antes de continuar")
-                eliminar_boton = st.button("Eliminar Tipo de Control")
-
-                if eliminar_boton:
-                    if eliminar_confirm:
-                        eliminar_tipo_control(id_tipo)
-                        st.success(f"Tipo de control **{tipo_nombre} — {linea_actual}** eliminado correctamente.")
-                        st.rerun()
-                    else:
-                        st.warning("Debes confirmar antes de eliminar.")
+                if st.button(f"Eliminar '{nombre_t}'"):
+                    eliminar_tipo_control(id_tipo)
+                    st.success("Tipo eliminado.")
+                    st.rerun()
 
     # ==============================================================
     # SECCIÓN 2: PARÁMETROS DE CALIDAD
     # ==============================================================
-    elif menu == "Parámetros de Calidad":
+    if menu == "Parámetros de Calidad":
         st.subheader("Gestión de Parámetros de Calidad")
 
         tipos = obtener_tipos_control()
         if not tipos:
-            st.warning("Primero registre tipos de control antes de añadir parámetros.")
+            st.warning("No existen tipos de control.")
             return
 
-        opciones_display = ["— Seleccionar Tipo de Control —"] + [
-            f"{t[1]} — {t[3]}" if t[3] else t[1] for t in tipos
+        opciones = ["— Seleccionar Tipo —"] + [
+            f"{t[1]} — {t[3]}" for t in tipos
         ]
-        tipo_sel = st.selectbox("Seleccionar Tipo de Control", opciones_display)
+        sel = st.selectbox("Seleccionar Tipo de Control", opciones)
 
-        if tipo_sel == "— Seleccionar Tipo de Control —":
-            st.info("Seleccione un tipo de control para ver o agregar parámetros.")
+        if sel == "— Seleccionar Tipo —":
             return
 
-        tipo_data = tipos[opciones_display.index(tipo_sel) - 1]
-        id_tipo = tipo_data[0]
-        tipo_nombre = tipo_data[1]
-        linea_nombre = tipo_data[3]
+        tipo = tipos[opciones.index(sel) - 1]
+        id_tipo = tipo[0]
+        nombre_tipo = tipo[1]
+        linea_tipo = tipo[3]
 
-        st.markdown(f"### Parámetros asociados a: **{tipo_nombre.upper()}** (Línea: {linea_nombre})")
+        st.markdown(f"### Parámetros para **{nombre_tipo}** — Línea {linea_tipo}")
 
         df = obtener_parametros_por_tipo(id_tipo)
-        if df.empty:
-            st.info("No hay parámetros registrados para este tipo de control.")
-        else:
-            st.dataframe(df, use_container_width=True)
+        st.dataframe(df, use_container_width=True)
 
-        # --------------------------
-        # AGREGAR NUEVO PARÁMETRO
-        # --------------------------
         st.markdown("---")
         st.subheader("Agregar Nuevo Parámetro")
 
-        with st.form("form_parametro", clear_on_submit=True):
-            nombre = st.text_input("Nombre del Parámetro", placeholder="Ej: Humedad, Peso, Textura")
-            descripcion = st.text_area("Descripción del Parámetro", placeholder="Ej: Evaluar la humedad en % del producto")
-            unidad = st.text_input("Unidad de Medida", placeholder="Ej: %, g, mm")
-            lim_inf = st.number_input("Límite Inferior", step=0.01, value=0.00)
-            lim_sup = st.number_input("Límite Superior", step=0.01, value=0.00)
-            guardar = st.form_submit_button("Guardar Parámetro")
+        # ========= SELECCIÓN DE TIPO =========
+        tipo_parametro = st.selectbox(
+            "Seleccione el tipo de parámetro",
+            ["— Seleccionar Tipo —", "Numérico (con límites)", "Check (Aprobado / No Aprobado)"],
+            key="tipo_add"
+        )
 
-            if guardar:
-                if not nombre:
-                    st.warning("Debes ingresar un nombre para el parámetro.")
+        if tipo_parametro != "— Seleccionar Tipo —":
+            with st.form("add_param_form", clear_on_submit=True):
+
+                nombre = st.text_input("Nombre del parámetro", key="add_nombre")
+                descripcion = st.text_area("Descripción del parámetro", key="add_desc")
+
+                if tipo_parametro.startswith("Numérico"):
+                    unidad = st.text_input("Unidad (%, g, mm)", key="add_unidad")
+                    lim_inf = st.number_input("Límite Inferior", step=0.01, key="add_lim_inf")
+                    lim_sup = st.number_input("Límite Superior", step=0.01, key="add_lim_sup")
+                    tipo_db = "numerico"
                 else:
-                    insertar_parametro(nombre, descripcion, unidad, lim_inf, lim_sup, id_tipo)
-                    st.success(f"Parámetro **{nombre}** agregado correctamente al tipo **{tipo_nombre}** (Línea: {linea_nombre}).")
-                    st.rerun()
+                    unidad = "CHECK"
+                    lim_inf = None
+                    lim_sup = None
+                    tipo_db = "check"
 
-        # --------------------------
-        # ELIMINAR PARÁMETRO
-        # --------------------------
+                guardar = st.form_submit_button("Guardar Parámetro")
+
+                if guardar:
+                    if not nombre:
+                        st.warning("Debe ingresar un nombre para el parámetro.")
+                    elif tipo_db == "numerico" and lim_inf > lim_sup:
+                        st.warning("El límite inferior no puede ser mayor al superior.")
+                    else:
+                        insertar_parametro(nombre, descripcion, unidad, lim_inf, lim_sup, tipo_db, id_tipo)
+                        st.success("Parámetro agregado correctamente.")
+                        st.rerun()
+
+        # ===================================================
+        # EDITAR / ELIMINAR PARÁMETROS EXISTENTES
+        # ===================================================
         if not df.empty:
             st.markdown("---")
-            st.subheader("Eliminar Parámetro Existente")
-            eliminar_nombre = st.selectbox("Seleccionar parámetro a eliminar", ["— Seleccionar Parámetro —"] + list(df["nombreParametro"]))
-            if eliminar_nombre != "— Seleccionar Parámetro —":
-                id_eliminar = int(df.loc[df["nombreParametro"] == eliminar_nombre, "idParametro"].iloc[0])
+            st.subheader("Editar o Eliminar Parámetro")
+
+            nombres = ["— Seleccionar Parámetro —"] + list(df["nombreParametro"])
+            sel_param = st.selectbox("Seleccione para editar", nombres)
+
+            if sel_param != "— Seleccionar Parámetro —":
+                fila = df[df["nombreParametro"] == sel_param].iloc[0]
+                id_param = int(fila["idParametro"])
+                is_check = fila["tipoParametro"] == "check"
+
+                with st.form("edit_param"):
+                    tipo_edit = st.selectbox(
+                        "Tipo de parámetro",
+                        ["Numérico (con límites)", "Check (Aprobado / No Aprobado)"],
+                        index=1 if is_check else 0,
+                        key="edit_tipo_param"
+                    )
+
+                    nuevo_nombre = st.text_input("Nombre", value=fila["nombreParametro"], key="edit_p_name")
+                    nueva_desc = st.text_area("Descripción", value=fila["descripcion"], key="edit_p_desc")
+
+                    if tipo_edit.startswith("Numérico"):
+                        nueva_unidad = st.text_input("Unidad", value=fila["unidadMedida"], key="edit_p_unidad")
+                        valor_inf = float(fila["limiteInferior"]) if fila["limiteInferior"] is not None else 0.0
+                        valor_sup = float(fila["limiteSuperior"]) if fila["limiteSuperior"] is not None else 0.0
+                        nuevo_inf = st.number_input("Límite Inferior", value=valor_inf, step=0.01, key="edit_p_lim_inf")
+                        nuevo_sup = st.number_input("Límite Superior", value=valor_sup, step=0.01, key="edit_p_lim_sup")
+                        tipo_db = "numerico"
+                    else:
+                        nueva_unidad = "CHECK"
+                        nuevo_inf = None
+                        nuevo_sup = None
+                        tipo_db = "check"
+
+                    guardar = st.form_submit_button("Guardar Cambios")
+                    if guardar:
+                        if not nuevo_nombre:
+                            st.warning("Ingrese un nombre para el parámetro.")
+                        elif tipo_db == "numerico" and nuevo_inf is None:
+                            st.warning("Ingrese límites válidos para parámetros numéricos.")
+                        elif tipo_db == "numerico" and nuevo_inf > nuevo_sup:
+                            st.warning("El límite inferior no puede ser mayor que el superior.")
+                        else:
+                            actualizar_parametro(id_param, nuevo_nombre, nueva_desc, nueva_unidad, nuevo_inf, nuevo_sup, tipo_db)
+                            st.success("Parámetro actualizado.")
+                            st.rerun()
+
                 if st.button("Eliminar Parámetro"):
-                    eliminar_parametro(id_eliminar)
-                    st.success(f"Parámetro **{eliminar_nombre}** eliminado correctamente.")
+                    eliminar_parametro(id_param)
+                    st.success("Parámetro eliminado correctamente.")
                     st.rerun()
 
 
