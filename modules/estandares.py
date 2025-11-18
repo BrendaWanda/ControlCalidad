@@ -195,7 +195,7 @@ def obtener_presentaciones_por_linea(id_linea):
         conn.close()
 
 
-def insertar_parametro_presentacion(id_presentacion, id_parametro, tipo_parametro, lim_inf, lim_sup):
+def insertar_parametro_presentacion(id_presentacion, id_parametro, tipo_parametro, lim_inf, lim_sup, unidad):
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -205,9 +205,9 @@ def insertar_parametro_presentacion(id_presentacion, id_parametro, tipo_parametr
 
         cursor.execute("""
             INSERT INTO presentacionparametro
-            (idPresentacion, idParametro, limiteInferior, limiteSuperior, tipoParametro)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (id_presentacion, id_parametro, lim_inf, lim_sup, tipo_parametro))
+            (idPresentacion, idParametro, limiteInferior, limiteSuperior, tipoParametro, unidadMedida)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (id_presentacion, id_parametro, lim_inf, lim_sup, tipo_parametro, unidad))
         conn.commit()
     finally:
         cursor.close()
@@ -216,17 +216,20 @@ def insertar_parametro_presentacion(id_presentacion, id_parametro, tipo_parametr
 
 def obtener_parametros_por_presentacion(id_presentacion):
     """
-    Devuelve parámetros asignados a la presentación, incluyendo el idTipoControl del parámetro base.
+    Devuelve parámetros asignados a la presentación,
+    incluyendo idTipoControl y unidadMedida.
     """
     conn = get_connection()
     query = """
-        SELECT pp.idPresentacionParametro,
-               p.idParametro,
-               p.nombreParametro,
-               p.idTipoControl,
-               COALESCE(pp.tipoParametro, p.tipoParametro) AS tipoParametro,
-               COALESCE(pp.limiteInferior, p.limiteInferior) AS limiteInferior,
-               COALESCE(pp.limiteSuperior, p.limiteSuperior) AS limiteSuperior
+        SELECT 
+            pp.idPresentacionParametro,
+            p.idParametro,
+            p.nombreParametro,
+            p.idTipoControl,
+            COALESCE(pp.tipoParametro, p.tipoParametro) AS tipoParametro,
+            COALESCE(pp.limiteInferior, p.limiteInferior) AS limiteInferior,
+            COALESCE(pp.limiteSuperior, p.limiteSuperior) AS limiteSuperior,
+            COALESCE(pp.unidadMedida, p.unidadMedida) AS unidadMedida
         FROM presentacionparametro pp
         INNER JOIN parametrocalidad p ON p.idParametro = pp.idParametro
         WHERE pp.idPresentacion = %s
@@ -392,7 +395,7 @@ def configurar_parametros():
             st.info("No hay parámetros asignados para este tipo de control en la presentación seleccionada.")
         else:
             st.dataframe(
-                df_assigned[['nombreParametro','tipoParametro','limiteInferior','limiteSuperior']],
+                df_assigned[['nombreParametro','unidadMedida','tipoParametro','limiteInferior','limiteSuperior']],
                 use_container_width=True
             )
 
@@ -446,7 +449,8 @@ def configurar_parametros():
                 id_parametro=nuevo_id_parametro,
                 tipo_parametro=tipo_presentacion,
                 lim_inf=lim_inf,
-                lim_sup=lim_sup
+                lim_sup=lim_sup,
+                unidad=unidad
             )
 
             st.success("✔ Parámetro asignado correctamente.")
