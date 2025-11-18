@@ -356,59 +356,57 @@ def configurar_parametros():
                 use_container_width=True
             )
 
+        # ===============================================================
+        # ASIGNAR NUEVO PARÁMETRO A LA PRESENTACIÓN (CORREGIDO)
+        # ===============================================================
+
         st.markdown("---")
         st.subheader("Asignar nuevo parámetro a esta presentación")
 
-        # ===============================================================
-        # FORMULARIO DINÁMICO (CORREGIDO)
-        # ===============================================================
-
-        # Elegir tipo de parámetro
         tipo_presentacion = st.selectbox(
-            "Tipo de parámetro para la presentación",
-            ["numerico", "check"],
-            key="tipo_tipo_presentacion"
+            "Tipo de parámetro",
+            ["numerico", "check"]
         )
 
-        # Campo visible siempre
-        nombre_parametro = st.text_input("Nombre del parámetro", key="nombre_parametro_presentacion")
+        nombre_parametro = st.text_input("Nombre del parámetro")
 
-        st.write("---")
-
-# ============================================================
-#   SI ES NUMÉRICO  → MOSTRAR LÍMITES Y UNIDAD
-# ============================================================
         if tipo_presentacion == "numerico":
-            unidad = st.text_input("Unidad en presentación (opcional)", key="unidad_presentacion")
+            unidad = st.text_input("Unidad (opcional)")
+            lim_inf = st.number_input("Límite inferior", step=0.01)
+            lim_sup = st.number_input("Límite superior", step=0.01)
+        else:
+            unidad = None
+            lim_inf = None
+            lim_sup = None
 
-            limite_inferior = st.number_input(
-                "Límite inferior",
-                step=0.01,
-                format="%.2f",
-                key="limite_inferior_presentacion"
+        if st.button("Asignar parámetro"):
+
+            if nombre_parametro.strip() == "":
+                st.warning("Debe ingresar un nombre de parámetro.")
+                st.stop()
+
+            # 1. Insertar parámetro base
+            nuevo_id_parametro = insertar_parametro(
+                nombre_parametro,
+                descripcion="",
+                unidad=unidad,
+                lim_inf=lim_inf,
+                lim_sup=lim_sup,
+                tipo_parametro=tipo_presentacion,
+                id_tipo=id_tipo
             )
 
-            limite_superior = st.number_input(
-                "Límite superior",
-                step=0.01,
-                format="%.2f",
-                key="limite_superior_presentacion"
+            # 2. Insertar relación presentación-parametro
+            insertar_parametro_presentacion(
+                id_presentacion=id_presentacion,
+                id_parametro=nuevo_id_parametro,
+                tipo_parametro=tipo_presentacion,
+                lim_inf=lim_inf,
+                lim_sup=lim_sup
             )
 
-            if st.button("Asignar parámetro"):
-                st.success(
-                    f"Asignado parámetro NUMÉRICO '{nombre_parametro}' "
-                    f"(Unidad: {unidad}, Min: {limite_inferior}, Max: {limite_superior})"
-                )
-
-# ============================================================
-#   SI ES CHECK  → SOLO NOMBRE
-# ============================================================
-        elif tipo_presentacion == "check":
-            if st.button("Asignar parámetro"):
-                st.success(
-                    f"Asignado parámetro CHECK '{nombre_parametro}' (sin límites)"
-                )
+            st.success("✔ Parámetro asignado correctamente.")
+            st.rerun()
 
         # ==========================================================
         # EDITAR / ELIMINAR
