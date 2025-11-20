@@ -15,7 +15,7 @@ def obtener_lineas():
 def obtener_presentaciones(idLinea):
     conn = get_connection()
     df = pd.read_sql("""
-        SELECT idPresentacion, nombrePresentacion 
+        SELECT idPresentacion, nombrePresentacion, codigoPresentacion
         FROM PresentacionProducto 
         WHERE idLinea = %s
         ORDER BY nombrePresentacion
@@ -33,13 +33,13 @@ def insertar_linea(nombre):
     conn.commit()
     conn.close()
 
-def insertar_presentacion(nombre, idLinea):
+def insertar_presentacion(nombre, codigo, idLinea):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO PresentacionProducto (nombrePresentacion, idLinea)
-        VALUES (%s, %s)
-    """, (nombre, idLinea))
+        INSERT INTO PresentacionProducto (nombrePresentacion, codigoPresentacion, idLinea)
+        VALUES (%s, %s, %s)
+    """, (nombre, codigo, idLinea))
     conn.commit()
     conn.close()
 
@@ -57,14 +57,15 @@ def editar_linea(idLinea, nuevo_nombre):
     conn.commit()
     conn.close()
 
-def editar_presentacion(idPresentacion, nuevo_nombre):
+def editar_presentacion(idPresentacion, nuevo_nombre, nuevo_codigo):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE PresentacionProducto
-        SET nombrePresentacion = %s
+        SET nombrePresentacion = %s,
+            codigoPresentacion = %s
         WHERE idPresentacion = %s
-    """, (nuevo_nombre, idPresentacion))
+    """, (nuevo_nombre, nuevo_codigo, idPresentacion))
     conn.commit()
     conn.close()
 
@@ -195,15 +196,17 @@ def gestionar_lineas():
 
     with st.form("form_present_add", clear_on_submit=True):
         nombre_present = st.text_input("Nombre de presentación", placeholder="Ej: Caja 12u, Bolsa 90g")
+        codigo_present = st.text_input("Código de presentación", placeholder="Ej: GAL-12U, CHO-90B")
+
         add_pres = st.form_submit_button("Agregar")
 
         if add_pres:
-            if not nombre_present:
-                st.warning("Ingrese un nombre válido.")
-            elif nombre_present.strip().lower() in df_present["nombrePresentacion"].str.lower().values:
-                st.error("Ya existe esa presentación en la línea.")
+            if not nombre_present or not codigo_present:
+                st.warning("Complete todos los campos.")
+            elif codigo_present.strip().lower() in df_present["codigoPresentacion"].str.lower().dropna().values:
+                st.error("Ese código ya existe en esta línea.")
             else:
-                insertar_presentacion(nombre_present, idLinea_pres)
+                insertar_presentacion(nombre_present, codigo_present, idLinea_pres)
                 st.success("Presentación registrada.")
                 st.rerun()
 
@@ -216,16 +219,16 @@ def gestionar_lineas():
         pres_sel = st.selectbox("Seleccionar presentación", df_present["nombrePresentacion"])
 
         idPresent = int(df_present.loc[df_present["nombrePresentacion"] == pres_sel, "idPresentacion"].iloc[0])
+        codigo_actual = df_present.loc[df_present["nombrePresentacion"] == pres_sel, "codigoPresentacion"].iloc[0]
 
         nuevo_pres = st.text_input("Nuevo nombre", value=pres_sel, key="edit_pres")
+        nuevo_codigo = st.text_input("Nuevo código", value=codigo_actual, key="edit_cod")
 
         if st.button("Guardar cambios presentación"):
-            if nuevo_pres.strip() == "":
-                st.warning("El nombre no puede estar vacío.")
-            elif nuevo_pres.strip().lower() in df_present["nombrePresentacion"].str.lower().values:
-                st.error("Ya existe una presentación con ese nombre.")
+            if nuevo_pres.strip() == "" or nuevo_codigo.strip() == "":
+                st.warning("Todos los campos son obligatorios.")
             else:
-                editar_presentacion(idPresent, nuevo_pres)
+                editar_presentacion(idPresent, nuevo_pres, nuevo_codigo)
                 st.success("Presentación actualizada.")
                 st.rerun()
 
