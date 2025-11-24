@@ -39,16 +39,13 @@ def menu_operario():
     st.sidebar.title("Menú Operario")
     opciones = st.sidebar.radio("Seleccione una opción", [
         "Registro de Controles de Calidad",
-        "Ver Alertas Automáticas",
-        "Confirmar Registros"
+        "Ver Alertas Automáticas"
     ])
 
     if opciones == "Registro de Controles de Calidad":
         controles.registrar_control()
     elif opciones == "Ver Alertas Automáticas":
         controles.ver_alertas()
-    elif opciones == "Confirmar Registros":
-        controles.confirmar_registros()
 
 # MENÚ SUPERVISOR
 def menu_supervisor():
