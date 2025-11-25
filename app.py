@@ -38,12 +38,17 @@ def main():
 def menu_operario():
     st.sidebar.title("Menú Operario")
     opciones = st.sidebar.radio("Seleccione una opción", [
-        "Registro de Controles de Calidad",
+        "Registrar Control de Calidad",
+        "Ver Registros Guardados",
         "Ver Alertas Automáticas"
     ])
 
-    if opciones == "Registro de Controles de Calidad":
+    if opciones == "Registrar Control de Calidad":
         controles.registrar_control()
+
+    elif opciones == "Ver Registros Guardados":
+        controles.ver_registros_guardados()
+
     elif opciones == "Ver Alertas Automáticas":
         controles.ver_alertas()
 
