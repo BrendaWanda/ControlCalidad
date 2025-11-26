@@ -11,11 +11,11 @@ def main():
         usuarios.login()
         return
 
-    # Si ya hay usuario en sesión
+    # Usuario en sesión
     usuario = st.session_state["usuario"]
     rol = st.session_state.get("menu_actual", "").lower()
 
-    # Barra lateral de sesión 
+    # Barra lateral
     st.sidebar.image("assets/logo_gustossi.jpg", width=120)
     st.sidebar.markdown(f"**{usuario['nombre']} {usuario['apellido']}**")
     st.sidebar.markdown(f"Rol: **{usuario['nombreRol']}**")
@@ -24,7 +24,7 @@ def main():
         st.session_state.clear()
         st.rerun()
 
-    # Redirigir al menú correspondiente según rol
+    # Menús por rol
     if rol == "operario":
         menu_operario()
     elif rol == "supervisor":
@@ -64,10 +64,13 @@ def menu_supervisor():
 
     if opciones == "Consultas de Registro":
         consultas.ver_registros()
+
     elif opciones == "Reportes Básicos":
         reportes.reportes_basicos()
+
     elif opciones == "Dashboards Power BI":
-        reportes.dashboard_powerbi()
+        dashboard_powerbi.dashboard_powerbi_module()
+
     elif opciones == "Órdenes de Trabajo":
         ordenes.gestionar_ordenes()
 
@@ -94,15 +97,14 @@ def menu_gerente():
         ordenes.gestionar_ordenes()
 
     elif opciones == "Líneas de Producción":
-        lineas.gestionar_lineas() 
+        lineas.gestionar_lineas()
 
     elif opciones == "Consultas y Reportes":
         consultas.ver_registros()
 
     elif opciones == "Dashboards Power BI":
-        dashboard_powerbi.dashboard_powerbi()
+        dashboard_powerbi.dashboard_powerbi_module()
 
-# EJECUCIÓN DEL SISTEMA
+# EJECUCIÓN
 if __name__ == "__main__":
     main()
-
