@@ -1,6 +1,6 @@
 import streamlit as st
 from modules import (
-    usuarios, controles, consultas, reportes, estandares,
+    usuarios, controles, graficos_control, reportes, estandares,
     ordenes, gestion_usuarios, dashboard_powerbi, lineas
 )
 
@@ -63,7 +63,7 @@ def menu_supervisor():
     ])
 
     if opciones == "Consultas de Registro":
-        consultas.ver_registros()
+        graficos_control.app_graficos_control()
 
     elif opciones == "Reportes Básicos":
         reportes.reportes_basicos()
@@ -100,7 +100,7 @@ def menu_gerente():
         lineas.gestionar_lineas()
 
     elif opciones == "Consultas y Reportes":
-        consultas.ver_registros()
+        graficos_control.app_graficos_control()
 
     elif opciones == "Dashboards Power BI":
         dashboard_powerbi.dashboard_powerbi_module()
