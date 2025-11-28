@@ -1,6 +1,6 @@
 import streamlit as st
 from modules import (
-    usuarios, controles, graficos_control, reportes, estandares,
+    usuarios, controles, graficos_control, graficos_alertas, reportes, estandares,
     ordenes, gestion_usuarios, dashboard_powerbi, lineas
 )
 
@@ -58,6 +58,7 @@ def menu_supervisor():
     opciones = st.sidebar.radio("Seleccione una opción", [
         "Consultas de Registro",
         "Reportes Básicos",
+        "Gráficos de Alertas",
         "Dashboards Power BI",
         "Órdenes de Trabajo"
     ])
@@ -67,12 +68,16 @@ def menu_supervisor():
 
     elif opciones == "Reportes Básicos":
         reportes.reportes_basicos()
+        
+    elif opciones == "Gráficos de Alertas":
+        graficos_alertas.ver_graficos_alertas()
 
     elif opciones == "Dashboards Power BI":
         dashboard_powerbi.dashboard_powerbi_module()
 
     elif opciones == "Órdenes de Trabajo":
         ordenes.gestionar_ordenes()
+
 
 # MENÚ GERENTE DE PLANTA
 def menu_gerente():
@@ -84,6 +89,7 @@ def menu_gerente():
         "Órdenes de Trabajo",
         "Líneas de Producción",
         "Consultas y Reportes",
+        "Gráficos de Alertas",
         "Dashboards Power BI"
     ])
 
@@ -101,6 +107,9 @@ def menu_gerente():
 
     elif opciones == "Consultas y Reportes":
         graficos_control.app_graficos_control()
+        
+    elif opciones == "Gráficos de Alertas":
+        graficos_alertas.ver_graficos_alertas()
 
     elif opciones == "Dashboards Power BI":
         dashboard_powerbi.dashboard_powerbi_module()
