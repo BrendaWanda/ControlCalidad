@@ -1,13 +1,17 @@
-# estandares.py
-# Gestión de Estándares por Línea → Presentación → Tipo de Control
-# Usa database.db_connection.get_connection()
+# modules/estandares.py
+"""
+Gestión de Estándares por Línea → Presentación → Tipo de Control
+Interfaz mejorada visualmente por "cuadrantes" y panel de edición/eliminación por parámetro.
+Usa database.db_connection.get_connection()
+"""
 
 import streamlit as st
 import pandas as pd
+import numpy as np
 from database.db_connection import get_connection
 
 # ==========================================================
-# FUNCIONES DE BASE DE DATOS
+# FUNCIONES DE BASE DE DATOS (igual que antes, con pequeños guards)
 # ==========================================================
 
 def obtener_lineas_produccion():
@@ -22,7 +26,6 @@ def obtener_lineas_produccion():
 
 
 def obtener_tipos_control():
-    """Retorna todos los tipos de control (sin filtrar)."""
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -39,7 +42,6 @@ def obtener_tipos_control():
 
 
 def obtener_tipos_por_linea(id_linea):
-    """Retorna solo los tipos de control asociados a una línea determinada."""
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -215,10 +217,6 @@ def insertar_parametro_presentacion(id_presentacion, id_parametro, tipo_parametr
 
 
 def obtener_parametros_por_presentacion(id_presentacion):
-    """
-    Devuelve parámetros asignados a la presentación,
-    incluyendo idTipoControl y unidadMedida.
-    """
     conn = get_connection()
     query = """
         SELECT 
@@ -275,242 +273,258 @@ def eliminar_parametro_presentacion(id_pp):
 
 
 # ==========================================================
-# INTERFAZ STREAMLIT
+# INTERFAZ STREAMLIT (MEJORADA)
 # ==========================================================
 
 def configurar_parametros():
-
+    st.set_page_config(page_title="Configuración de Estándares", layout="wide")
     st.title("Configuración de Estándares de Calidad - Gustossi S.R.L.")
     st.markdown("---")
 
-    menu = st.sidebar.radio("Menú de Configuración", [
-        "Tipos de Control",
-        "Parámetros de Calidad"
-    ])
+    # Menú superior simple
+    menu = st.radio("Panel", ["Tipos de Control", "Parámetros de Calidad por Presentación"], horizontal=True)
 
-    # ==========================================================
-    # TIPOS DE CONTROL
-    # ==========================================================
+    # -----------------
+    # TIPOS DE CONTROL (panel simple, lista editable)
+    # -----------------
     if menu == "Tipos de Control":
         st.subheader("Gestión de Tipos de Control")
-
         lineas = obtener_lineas_produccion()
         tipos = obtener_tipos_control()
 
-        if tipos:
-            df_tipos = pd.DataFrame(tipos, columns=["ID", "Tipo de Control", "Descripción", "Línea", "idLinea"])
-            st.dataframe(df_tipos[["ID", "Tipo de Control", "Descripción", "Línea"]], use_container_width=True)
-        else:
-            st.info("No hay tipos de control registrados aún.")
+        col1, col2 = st.columns([1, 2])
 
-        st.markdown("---")
-        st.subheader("Agregar Nuevo Tipo de Control")
+        with col1:
+            st.markdown("**Líneas disponibles**")
+            df_lines = pd.DataFrame(lineas, columns=["idLinea", "nombreLinea"]) if lineas else pd.DataFrame(columns=["idLinea", "nombreLinea"])
+            st.dataframe(df_lines.rename(columns={"idLinea": "ID", "nombreLinea": "Línea"}), use_container_width=True)
 
-        with st.form("form_tipo_control", clear_on_submit=True):
-            nombre = st.text_input("Nombre del Tipo de Control")
-            descripcion = st.text_area("Descripción")
-
-            opciones = ["— Seleccionar Línea —"] + [l[1] for l in lineas]
-            linea_nombre = st.selectbox("Línea de Producción", opciones)
-
-            guardar = st.form_submit_button("Guardar Tipo")
-
-            if guardar:
-                if linea_nombre == "— Seleccionar Línea —":
-                    st.warning("Seleccione una línea válida.")
-                else:
-                    id_linea = next(l[0] for l in lineas if l[1] == linea_nombre)
-                    if nombre.strip() == "":
-                        st.warning("El nombre del tipo de control no puede estar vacío.")
+            st.markdown("### Nuevo Tipo de Control")
+            with st.form("form_tipo_control", clear_on_submit=True):
+                nombre = st.text_input("Nombre del Tipo de Control")
+                descripcion = st.text_area("Descripción", height=80)
+                opciones = ["— Seleccionar Línea —"] + [l[1] for l in lineas]
+                linea_nombre = st.selectbox("Línea de Producción", opciones)
+                guardar = st.form_submit_button("Guardar Tipo")
+                if guardar:
+                    if linea_nombre == "— Seleccionar Línea —":
+                        st.warning("Seleccione una línea válida.")
                     else:
-                        insertar_tipo_control(nombre, descripcion, id_linea)
-                        st.success("Tipo de control agregado.")
-                        st.rerun()
-
-    # ==========================================================
-    # PARÁMETROS DE CALIDAD POR PRESENTACIÓN
-    # ==========================================================
-    if menu == "Parámetros de Calidad":
-
-        st.subheader("Gestión de Parámetros de Calidad por Presentación")
-
-        # 1) Seleccionar Línea
-        lineas = obtener_lineas_produccion()
-
-        opciones_linea = ["— Seleccionar Línea —"] + [l[1] for l in lineas]
-        sel_linea = st.selectbox("Seleccione una Línea", opciones_linea)
-
-        if sel_linea == "— Seleccionar Línea —":
-            st.info("Seleccione una línea para continuar.")
-            return
-
-        id_linea = next(l[0] for l in lineas if l[1] == sel_linea)
-
-        # 2) Seleccionar Presentación (filtrada por línea)
-        presentaciones = obtener_presentaciones_por_linea(id_linea)
-
-        if not presentaciones:
-            st.info("No hay presentaciones para la línea seleccionada.")
-            return
-
-        opciones_pres = ["— Seleccionar Presentación —"] + [p[1] for p in presentaciones]
-        sel_pres = st.selectbox("Seleccione una Presentación", opciones_pres)
-
-        if sel_pres == "— Seleccionar Presentación —":
-            st.info("Seleccione una presentación para continuar.")
-            return
-
-        id_presentacion = next(p[0] for p in presentaciones if p[1] == sel_pres)
-
-        # 3) Seleccionar Tipo de Control (filtrado por la misma línea)
-        tipos_linea = obtener_tipos_por_linea(id_linea)
-
-        if not tipos_linea:
-            st.info("No hay tipos de control asociados a la línea seleccionada.")
-            return
-
-        opciones_tipo = ["— Seleccionar Tipo —"] + [t[1] for t in tipos_linea]
-        sel_tipo = st.selectbox("Seleccione Tipo de Control", opciones_tipo)
-
-        if sel_tipo == "— Seleccionar Tipo —":
-            st.info("Seleccione un tipo de control para continuar.")
-            return
-
-        # obtener id_tipo desde tipos_linea (filtrado por nombre, ya que son de la misma línea)
-        tipo_tuple = tipos_linea[opciones_tipo.index(sel_tipo) - 1]
-        id_tipo = tipo_tuple[0]
-        nombre_tipo = tipo_tuple[1]
-
-        st.markdown(f"### Parámetros de **{nombre_tipo}** — Presentación **{sel_pres}**")
-
-        # PARÁMETROS YA ASIGNADOS (a la presentación) — luego filtramos por el tipo seleccionado
-        df_assigned_full = obtener_parametros_por_presentacion(id_presentacion)
-
-        # Filtrar solo parámetros cuyo idTipoControl coincide con el tipo seleccionado
-        df_assigned = df_assigned_full[df_assigned_full["idTipoControl"] == id_tipo]
-
-        st.markdown("Parámetros asignados:")
-
-        if df_assigned.empty:
-            st.info("No hay parámetros asignados para este tipo de control en la presentación seleccionada.")
-        else:
-            st.dataframe(
-                df_assigned[['nombreParametro','unidadMedida','tipoParametro','limiteInferior','limiteSuperior']],
-                use_container_width=True
-            )
-
-        # ===============================================================
-        # ASIGNAR NUEVO PARÁMETRO A LA PRESENTACIÓN
-        # ===============================================================
-
-        st.markdown("---")
-        st.subheader("Asignar nuevo parámetro a esta presentación")
-
-        tipo_presentacion = st.selectbox(
-            "Tipo de parámetro",
-            ["numerico", "check"]
-        )
-
-        nombre_parametro = st.text_input("Nombre del parámetro")
-
-        if tipo_presentacion == "numerico":
-            unidad = st.text_input("Unidad (opcional)")
-            lim_inf = st.number_input("Límite inferior", step=0.01, format="%.4f")
-            lim_sup = st.number_input("Límite superior", step=0.01, format="%.4f")
-        else:
-            unidad = None
-            lim_inf = None
-            lim_sup = None
-
-        if st.button("Asignar parámetro"):
-
-            if nombre_parametro.strip() == "":
-                st.warning("Debe ingresar un nombre de parámetro.")
-                st.stop()
-
-            if tipo_presentacion == "numerico" and (lim_sup is not None and lim_inf is not None) and lim_inf > lim_sup:
-                st.warning("El límite inferior no puede ser mayor al límite superior.")
-                st.stop()
-
-            # 1. Insertar parámetro base (se asigna al tipo de control seleccionado)
-            nuevo_id_parametro = insertar_parametro(
-                nombre_parametro,
-                descripcion="",
-                unidad=unidad,
-                lim_inf=lim_inf,
-                lim_sup=lim_sup,
-                tipo_parametro=tipo_presentacion,
-                id_tipo=id_tipo
-            )
-
-            # 2. Insertar relación presentación-parametro (con límites concretos para la presentación)
-            insertar_parametro_presentacion(
-                id_presentacion=id_presentacion,
-                id_parametro=nuevo_id_parametro,
-                tipo_parametro=tipo_presentacion,
-                lim_inf=lim_inf,
-                lim_sup=lim_sup,
-                unidad=unidad
-            )
-
-            st.success("✔ Parámetro asignado correctamente.")
-            st.rerun()
-
-        # ==========================================================
-        # EDITAR / ELIMINAR
-        # ==========================================================
-
-        st.markdown("---")
-        st.subheader("Editar / Eliminar parámetros asignados")
-
-        # recargar asignados por presentación y filtrar por tipo seleccionado
-        df_assigned_full = obtener_parametros_por_presentacion(id_presentacion)
-        df_assigned = df_assigned_full[df_assigned_full["idTipoControl"] == id_tipo]
-
-        if df_assigned.empty:
-            st.info("No hay parámetros para editar/eliminar (para el tipo de control seleccionado).")
-        else:
-            opciones = ["— Seleccionar —"] + list(df_assigned["nombreParametro"])
-            sel = st.selectbox("Seleccione parámetro", opciones)
-
-            if sel != "— Seleccionar —":
-
-                fila = df_assigned[df_assigned["nombreParametro"] == sel].iloc[0]
-
-                id_pp = int(fila["idPresentacionParametro"])
-                tipo_actual = fila["tipoParametro"]
-                lim_inf_actual = fila["limiteInferior"]
-                lim_sup_actual = fila["limiteSuperior"]
-
-                with st.form("edit_param", clear_on_submit=True):
-                    tipo_new = st.selectbox(
-                        "Tipo",
-                        ["numerico", "check"],
-                        index=0 if tipo_actual == "numerico" else 1
-                    )
-
-                    if tipo_new == "numerico":
-                        new_inf = st.number_input("Límite inferior", value=float(lim_inf_actual or 0.0), format="%.4f")
-                        new_sup = st.number_input("Límite superior", value=float(lim_sup_actual or 0.0), format="%.4f")
-                    else:
-                        new_inf = None
-                        new_sup = None
-
-                    guardar = st.form_submit_button("Guardar cambios")
-
-                    if guardar:
-                        if tipo_new == "numerico" and new_inf is not None and new_sup is not None and new_inf > new_sup:
-                            st.warning("El límite inferior no puede ser mayor al superior.")
+                        id_linea = next(l[0] for l in lineas if l[1] == linea_nombre)
+                        if nombre.strip() == "":
+                            st.warning("El nombre del tipo de control no puede estar vacío.")
                         else:
-                            actualizar_parametro_presentacion(id_pp, tipo_new, new_inf, new_sup)
-                            st.success("Actualizado.")
+                            insertar_tipo_control(nombre, descripcion, id_linea)
+                            st.success("Tipo de control agregado.")
                             st.rerun()
 
-                if st.button("Eliminar parámetro"):
-                    eliminar_parametro_presentacion(id_pp)
-                    st.success("Eliminado.")
-                    st.rerun()
+        with col2:
+            st.markdown("**Tipos de control existentes**")
+            if tipos:
+                df_tipos = pd.DataFrame(tipos, columns=["ID", "Tipo de Control", "Descripción", "Línea", "idLinea"])
+                # Mostrar en tabla y además permitir editar/eliminar por fila con expanders
+                for row in df_tipos.to_dict("records"):
+                    with st.expander(f"{row['Tipo de Control']} — {row['Línea']}"):
+                        st.write(row["Descripción"] or "—")
+                        cola, colb = st.columns([3, 1])
+                        with cola:
+                            nuevo_nombre = st.text_input(f"Nombre ({row['ID']})", value=row['Tipo de Control'], key=f"tipo_nombre_{row['ID']}")
+                            nueva_desc = st.text_area(f"Descripción ({row['ID']})", value=row['Descripción'] or "", key=f"tipo_desc_{row['ID']}")
+                            # select línea
+                            opciones_lineas = [l[1] for l in lineas]
+                            linea_actual = next((l[1] for l in lineas if l[0] == row["idLinea"]), "—")
+                            nueva_linea = st.selectbox(f"Línea ({row['ID']})", ["— Seleccionar —"] + opciones_lineas, index=(1 + opciones_lineas.index(linea_actual)) if linea_actual in opciones_lineas else 0, key=f"tipo_linea_{row['ID']}")
+                        with colb:
+                            if st.button("Guardar", key=f"guardar_tipo_{row['ID']}"):
+                                if nueva_linea == "— Seleccionar —":
+                                    st.warning("Seleccione una línea válida.")
+                                else:
+                                    id_new_linea = next(l[0] for l in lineas if l[1] == nueva_linea)
+                                    actualizar_tipo_control(row['ID'], nuevo_nombre, nueva_desc, id_new_linea)
+                                    st.success("Tipo actualizado.")
+                                    st.rerun()
+                            if st.button("Eliminar", key=f"eliminar_tipo_{row['ID']}"):
+                                eliminar_tipo_control(row['ID'])
+                                st.success("Eliminado.")
+                                st.rerun()
+            else:
+                st.info("No hay tipos de control registrados aún.")
 
+    # -----------------
+    # PARÁMETROS POR PRESENTACIÓN (UI en cuadrantes)
+    # -----------------
+    else:
+        st.subheader("Parámetros de Calidad por Presentación (cuadrantes)")
+
+        # --- Obtener líneas y presentaciones ---
+        lineas = obtener_lineas_produccion()
+        if not lineas:
+            st.info("No hay líneas de producción registradas.")
+            return
+
+        # LAYOUT: dos columnas principales (izq controles, der panel de parámetros)
+        left_col, right_col = st.columns([1, 2])
+
+        # LEFT TOP: selección cascade
+        with left_col:
+            st.markdown("### Filtros")
+            opciones_linea = ["— Seleccionar Línea —"] + [l[1] for l in lineas]
+            sel_linea = st.selectbox("Seleccione una Línea", opciones_linea, index=0, key="est_linea")
+            if sel_linea == "— Seleccionar Línea —":
+                st.info("Seleccione una línea para continuar.")
+                return
+            id_linea = next(l[0] for l in lineas if l[1] == sel_linea)
+
+            # Presentaciones
+            presentaciones = obtener_presentaciones_por_linea(id_linea)
+            if not presentaciones:
+                st.info("No hay presentaciones para la línea seleccionada.")
+                return
+            opciones_pres = ["— Seleccionar Presentación —"] + [p[1] for p in presentaciones]
+            sel_pres = st.selectbox("Seleccione una Presentación", opciones_pres, key="est_pres")
+            if sel_pres == "— Seleccionar Presentación —":
+                st.info("Seleccione una presentación para continuar.")
+                return
+            id_presentacion = next(p[0] for p in presentaciones if p[1] == sel_pres)
+
+            # Tipos de control para la linea
+            tipos_linea = obtener_tipos_por_linea(id_linea)
+            if not tipos_linea:
+                st.info("No hay tipos de control asociados a la línea seleccionada.")
+                return
+            opciones_tipo = ["— Seleccionar Tipo —"] + [t[1] for t in tipos_linea]
+            sel_tipo = st.selectbox("Seleccione Tipo de Control", opciones_tipo, key="est_tipo")
+            if sel_tipo == "— Seleccionar Tipo —":
+                st.info("Seleccione un tipo de control para continuar.")
+                return
+            # obtener id_tipo basado en seleccion
+            tipo_tuple = tipos_linea[opciones_tipo.index(sel_tipo) - 1]
+            id_tipo = tipo_tuple[0]
+            nombre_tipo = tipo_tuple[1]
+
+            st.markdown(f"**Tipo seleccionado:** {nombre_tipo}")
+            st.markdown(f"**Presentación:** {sel_pres}")
+
+            st.markdown("---")
+
+            # Cuadrante inferior izquierdo: Form para agregar nuevo parámetro (rápido)
+            st.markdown("### Asignar nuevo parámetro (rápido)")
+            with st.form("form_asignar_param", clear_on_submit=True):
+                tipo_presentacion = st.selectbox("Tipo de parámetro", ["numerico", "check"], key="asig_tipo")
+                nombre_parametro = st.text_input("Nombre del parámetro", key="asig_nombre")
+                descripcion_param = st.text_area("Descripción (opcional)", key="asig_desc", height=80)
+                if tipo_presentacion == "numerico":
+                    unidad = st.text_input("Unidad (opcional)", key="asig_unidad")
+                    lim_inf = st.number_input("Límite inferior", step=0.01, format="%.4f", key="asig_inf")
+                    lim_sup = st.number_input("Límite superior", step=0.01, format="%.4f", key="asig_sup")
+                else:
+                    unidad = None
+                    lim_inf = None
+                    lim_sup = None
+
+                btn_asignar = st.form_submit_button("Asignar parámetro a presentación")
+                if btn_asignar:
+                    if nombre_parametro.strip() == "":
+                        st.warning("Debe ingresar un nombre de parámetro.")
+                    elif tipo_presentacion == "numerico" and (lim_inf is not None and lim_sup is not None) and lim_inf > lim_sup:
+                        st.warning("El límite inferior no puede ser mayor al límite superior.")
+                    else:
+                        # Crear parámetro base (asignado al tipo)
+                        nuevo_id_parametro = insertar_parametro(
+                            nombre_parametro,
+                            descripcion=descripcion_param,
+                            unidad=unidad,
+                            lim_inf=lim_inf,
+                            lim_sup=lim_sup,
+                            tipo_parametro=tipo_presentacion,
+                            id_tipo=id_tipo
+                        )
+                        # Asignar a la presentacion
+                        insertar_parametro_presentacion(
+                            id_presentacion=id_presentacion,
+                            id_parametro=nuevo_id_parametro,
+                            tipo_parametro=tipo_presentacion,
+                            lim_inf=lim_inf,
+                            lim_sup=lim_sup,
+                            unidad=unidad
+                        )
+                        st.success("✔ Parámetro asignado correctamente.")
+                        st.rerun()
+
+        # RIGHT column: panel de parámetros asignados y edición por fila (cuadrantes derechos)
+        with right_col:
+            st.markdown("## Parámetros asignados a la presentación")
+            df_assigned_full = obtener_parametros_por_presentacion(id_presentacion)
+            # Filtrar sólo los del tipo seleccionado
+            df_assigned = df_assigned_full[df_assigned_full["idTipoControl"] == id_tipo]
+
+            if df_assigned.empty:
+                st.info("No hay parámetros asignados para este tipo de control en la presentación seleccionada.")
+            else:
+                # Mostrar resumen compacto en la parte superior
+                c1, c2, c3 = st.columns([1,1,1])
+                with c1:
+                    st.metric("Parámetros totales", len(df_assigned))
+                with c2:
+                    tipos_counts = df_assigned["tipoParametro"].value_counts().to_dict()
+                    st.write("Tipos:", tipos_counts)
+                with c3:
+                    unidades = df_assigned["unidadMedida"].fillna("—").unique().tolist()
+                    st.write("Unidades:", ", ".join(map(str, unidades[:6])))
+
+                st.markdown("---")
+                st.markdown("### Lista y acciones (editar / eliminar)")
+
+                # Iterar y mostrar cada parámetro como un 'card' (expander) con formulario de edición y botón eliminar
+                for i, row in df_assigned.reset_index(drop=True).iterrows():
+                    pid = int(row["idParametro"])
+                    id_pp = int(row["idPresentacionParametro"])
+                    nombre_p = row["nombreParametro"]
+                    tipo_p = row["tipoParametro"]
+                    unidad_p = row["unidadMedida"] if pd.notna(row["unidadMedida"]) else ""
+                    lim_inf_p = None if pd.isna(row["limiteInferior"]) else float(row["limiteInferior"])
+                    lim_sup_p = None if pd.isna(row["limiteSuperior"]) else float(row["limiteSuperior"])
+
+                    with st.expander(f"{nombre_p}  —  tipo: {tipo_p}"):
+                        colL, colR = st.columns([3,1])
+                        with colL:
+                            st.write(f"Unidad: **{unidad_p or '—'}**")
+                            st.write(f"Límite inferior: **{lim_inf_p if lim_inf_p is not None else '—'}**")
+                            st.write(f"Límite superior: **{lim_sup_p if lim_sup_p is not None else '—'}**")
+                            st.write("---")
+                            # Form de edición en línea
+                            with st.form(key=f"form_edit_pp_{id_pp}", clear_on_submit=False):
+                                nuevo_tipo = st.selectbox("Tipo de parámetro", ["numerico", "check"], index=0 if tipo_p == "numerico" else 1, key=f"tipo_{id_pp}")
+                                if nuevo_tipo == "numerico":
+                                    new_inf = st.number_input("Límite inferior", value=lim_inf_p if lim_inf_p is not None else 0.0, format="%.4f", key=f"inf_{id_pp}")
+                                    new_sup = st.number_input("Límite superior", value=lim_sup_p if lim_sup_p is not None else 0.0, format="%.4f", key=f"sup_{id_pp}")
+                                else:
+                                    new_inf = None
+                                    new_sup = None
+                                submitted = st.form_submit_button("Guardar cambios", use_container_width=True, key=f"guardar_pp_{id_pp}")
+                                if submitted:
+                                    if nuevo_tipo == "numerico" and new_inf is not None and new_sup is not None and new_inf > new_sup:
+                                        st.warning("Límite inferior no puede ser mayor al superior.")
+                                    else:
+                                        actualizar_parametro_presentacion(id_pp, nuevo_tipo, new_inf, new_sup)
+                                        st.success("Parámetro actualizado.")
+                                        st.rerun()
+                        with colR:
+                            if st.button("Eliminar parámetro", key=f"del_pp_{id_pp}"):
+                                eliminar_parametro_presentacion(id_pp)
+                                st.success("Parámetro eliminado.")
+                                st.rerun()
+
+                st.markdown("---")
+                st.markdown("### Exportar / Tabla completa")
+                st.dataframe(df_assigned[['idPresentacionParametro','idParametro','nombreParametro','tipoParametro','unidadMedida','limiteInferior','limiteSuperior']].rename(columns={
+                    'idPresentacionParametro':'ID_PP','idParametro':'ID_PARAM','nombreParametro':'Nombre','tipoParametro':'Tipo','unidadMedida':'Unidad','limiteInferior':'LimInf','limiteSuperior':'LimSup'
+                }), use_container_width=True)
+
+                csv = df_assigned.to_csv(index=False).encode('utf-8')
+                st.download_button("📥 Descargar CSV (asignados)", data=csv, file_name="parametros_asignados.csv", mime="text/csv")
+
+    # fin de interfaz
 
 if __name__ == "__main__":
     configurar_parametros()

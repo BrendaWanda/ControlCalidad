@@ -67,7 +67,9 @@ def obtener_parametros():
 # ============================================
 
 def ver_graficos_alertas():
-    st.title("📊 Reportes y Gráficos de Alertas")
+    st.set_page_config(page_title="Alertas de Calidad", layout="wide")
+    st.title("🚨 Reporte de Alertas de Calidad")
+    st.caption("Monitoreo de desviaciones fuera de límites")
     st.markdown("---")
 
     df = obtener_alertas()
@@ -75,112 +77,116 @@ def ver_graficos_alertas():
         st.warning("No hay alertas registradas.")
         return
 
+    df["fechaAlerta"] = pd.to_datetime(df["fechaAlerta"])
+
     # -------------------------------
     # Sidebar: Filtros en cascada
     # -------------------------------
-    st.sidebar.header("Filtros de Alertas")
+    st.sidebar.header("🔎 Filtros de Alertas")
 
-    # Rango de fechas
-    df["fechaAlerta"] = pd.to_datetime(df["fechaAlerta"])
     min_fecha = df["fechaAlerta"].min()
     max_fecha = df["fechaAlerta"].max()
-    rango = st.sidebar.date_input("Rango de fechas", [min_fecha, max_fecha])
+
+    rango = st.sidebar.date_input("📅 Rango de fechas", [min_fecha, max_fecha])
     if len(rango) == 2:
         ini, fin = rango
         df = df[(df["fechaAlerta"] >= pd.to_datetime(ini)) & (df["fechaAlerta"] <= pd.to_datetime(fin))]
 
-    # Filtro por Línea
+    # Línea
     lineas = obtener_lineas()
     opciones_linea = {nombre: id for id, nombre in lineas}
-    linea = st.sidebar.selectbox("Línea de Producción", ["Todas"] + list(opciones_linea.keys()))
-    if linea != "Todas":
-        df = df[df["idLinea"] == opciones_linea[linea]]
-        linea_id = opciones_linea[linea]
-    else:
-        linea_id = None
+    linea = st.sidebar.selectbox("🏭 Línea", ["Todas"] + list(opciones_linea.keys()))
+    linea_id = opciones_linea.get(linea) if linea != "Todas" else None
 
-    # Filtro por Presentación
+    if linea_id:
+        df = df[df["idLinea"] == linea_id]
+
+    # Presentación
     presentaciones = obtener_presentaciones()
     if linea_id:
-        presentaciones = [p for p in presentaciones if p[2]==linea_id]  # filtrar por línea
-    opciones_pres = {nombre: id for id, nombre, _ in presentaciones}
-    presentacion = st.sidebar.selectbox("Presentación", ["Todas"] + list(opciones_pres.keys()))
-    if presentacion != "Todas":
-        df = df[df["idPresentacion"] == opciones_pres[presentacion]]
-        pres_id = opciones_pres[presentacion]
-    else:
-        pres_id = None
+        presentaciones = [p for p in presentaciones if p[2] == linea_id]
 
-    # Filtro por Tipo de Control
+    opciones_pres = {nombre: id for id, nombre, _ in presentaciones}
+    presentacion = st.sidebar.selectbox("📦 Presentación", ["Todas"] + list(opciones_pres.keys()))
+    pres_id = opciones_pres.get(presentacion) if presentacion != "Todas" else None
+
+    if pres_id:
+        df = df[df["idPresentacion"] == pres_id]
+
+    # Tipo de Control
     tipos = obtener_tipos_control()
     if linea_id:
-        tipos = [t for t in tipos if t[2]==linea_id]  # filtrar por línea
-    opciones_tipo = {nombre: id for id, nombre, _ in tipos}
-    tipo_control = st.sidebar.selectbox("Tipo de Control", ["Todos"] + list(opciones_tipo.keys()))
-    if tipo_control != "Todos":
-        df = df[df["idTipoControl"] == opciones_tipo[tipo_control]]
-        tipo_id = opciones_tipo[tipo_control]
-    else:
-        tipo_id = None
+        tipos = [t for t in tipos if t[2] == linea_id]
 
-    # Filtro por Parámetro
+    opciones_tipo = {nombre: id for id, nombre, _ in tipos}
+    tipo_control = st.sidebar.selectbox("🧪 Tipo de Control", ["Todos"] + list(opciones_tipo.keys()))
+    tipo_id = opciones_tipo.get(tipo_control) if tipo_control != "Todos" else None
+
+    if tipo_id:
+        df = df[df["idTipoControl"] == tipo_id]
+
+    # Parámetro
     parametros = obtener_parametros()
     if tipo_id:
-        parametros = [p for p in parametros if p[2]==tipo_id]
+        parametros = [p for p in parametros if p[2] == tipo_id]
+
     opciones_param = {nombre: id for id, nombre, _ in parametros}
-    parametro = st.sidebar.selectbox("Parámetro", ["Todos"] + list(opciones_param.keys()))
+    parametro = st.sidebar.selectbox("📏 Parámetro", ["Todos"] + list(opciones_param.keys()))
+
     if parametro != "Todos":
         df = df[df["idParametro"] == opciones_param[parametro]]
 
-    st.subheader("📌 Total de alertas encontradas:")
-    st.info(f"**{len(df)} alertas**")
+    # ===============================
+    #          KPIs SUPERIORES
+    # ===============================
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("🚨 Total Alertas", len(df))
+    col2.metric("🔴 Fuera de Límite", df["valorFuera"].notna().sum())
+    col3.metric("✅ Cerradas", df[df["estado"] == "Cerrada"].shape[0] if "estado" in df else 0)
+    col4.metric("⏳ Pendientes", df[df["estado"] != "Cerrada"].shape[0] if "estado" in df else 0)
+
     st.markdown("---")
 
-    # ============================================
-    #     1) GRÁFICO PUNTUAL FUERA DE LÍMITES
-    # ============================================
-    st.subheader("🔴 Alertas fuera de límites")
-    if not df.empty:
-        fig, ax = plt.subplots(figsize=(10, 4))
+    # ===============================
+    #        GRÁFICOS EN 2 COLUMNAS
+    # ===============================
+    colA, colB = st.columns(2)
+
+    # --- GRÁFICO PUNTUAL ---
+    with colA:
+        st.subheader("🔴 Alertas fuera de límites")
+        fig, ax = plt.subplots()
         ax.scatter(df["fechaAlerta"], df["valorFuera"])
         ax.set_xlabel("Fecha")
         ax.set_ylabel("Valor fuera de rango")
-        ax.set_title("Puntos donde se generaron alertas")
         plt.xticks(rotation=45)
         st.pyplot(fig)
-    else:
-        st.warning("No hay datos para mostrar este gráfico.")
 
-    st.markdown("---")
-
-    # ============================================
-    #     2) GRÁFICO DE BARRAS
-    # ============================================
-    st.subheader("📊 Gráfico de barras: Alertas por día")
-    if not df.empty:
+    # --- GRÁFICO BARRAS ---
+    with colB:
+        st.subheader("📊 Alertas por día")
         df_bar = df.copy()
         df_bar["dia"] = df_bar["fechaAlerta"].dt.date
         conteo = df_bar.groupby("dia").size()
-        fig, ax = plt.subplots(figsize=(10, 4))
-        ax.bar(conteo.index, conteo.values)
-        ax.set_title("Cantidad de alertas por día")
-        ax.set_xlabel("Fecha")
-        ax.set_ylabel("Alertas")
+
+        fig2, ax2 = plt.subplots()
+        ax2.bar(conteo.index, conteo.values)
+        ax2.set_xlabel("Fecha")
+        ax2.set_ylabel("Cantidad")
         plt.xticks(rotation=45)
-        st.pyplot(fig)
-    else:
-        st.warning("No hay datos para mostrar este gráfico.")
+        st.pyplot(fig2)
 
     st.markdown("---")
 
-    # ============================================
-    #     TABLA DE DETALLE
-    # ============================================
-    st.subheader("📋 Tabla de alertas filtradas")
-    st.dataframe(df)
+    # ===============================
+    #      TABLA DE DETALLE
+    # ===============================
+    st.subheader("📋 Detalle de Alertas")
+    st.dataframe(df, use_container_width=True)
 
     st.download_button(
-        label="📥 Descargar Excel",
+        label="📥 Descargar Alertas (CSV)",
         data=df.to_csv(index=False).encode("utf-8"),
         file_name="alertas_filtradas.csv",
         mime="text/csv"

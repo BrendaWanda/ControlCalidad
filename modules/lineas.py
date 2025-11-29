@@ -2,9 +2,7 @@ import streamlit as st
 from database.db_connection import get_connection
 import pandas as pd
 
-# ==========================================================
 # CONSULTAS A BASE DE DATOS
-# ==========================================================
 
 def obtener_lineas():
     conn = get_connection()
@@ -23,8 +21,23 @@ def obtener_presentaciones(idLinea):
     conn.close()
     return df
 
+def obtener_parametros(idPresentacion):
+    conn = get_connection()
+    df = pd.read_sql("""
+        SELECT 
+            idPresentacionParametro,
+            idParametro,
+            limiteInferior,
+            limiteSuperior,
+            unidadMedida,
+            tipoParametro
+        FROM presentacionparametro
+        WHERE idPresentacion = %s
+    """, conn, params=(idPresentacion,))
+    conn.close()
+    return df
 
-# ------------------ INSERTAR ------------------
+# INSERTAR
 
 def insertar_linea(nombre):
     conn = get_connection()
@@ -43,17 +56,23 @@ def insertar_presentacion(nombre, codigo, idLinea):
     conn.commit()
     conn.close()
 
+def insertar_parametro(idPresentacion, idParametro, inf, sup, unidad, tipo):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO presentacionparametro 
+        (idPresentacion, idParametro, limiteInferior, limiteSuperior, unidadMedida, tipoParametro)
+        VALUES (%s,%s,%s,%s,%s,%s)
+    """, (idPresentacion, idParametro, inf, sup, unidad, tipo))
+    conn.commit()
+    conn.close()
 
-# ------------------ EDITAR ------------------
+# EDITAR
 
 def editar_linea(idLinea, nuevo_nombre):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE LineaProduccion
-        SET nombreLinea = %s
-        WHERE idLinea = %s
-    """, (nuevo_nombre, idLinea))
+    cursor.execute("UPDATE LineaProduccion SET nombreLinea = %s WHERE idLinea = %s", (nuevo_nombre, idLinea))
     conn.commit()
     conn.close()
 
@@ -62,15 +81,24 @@ def editar_presentacion(idPresentacion, nuevo_nombre, nuevo_codigo):
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE PresentacionProducto
-        SET nombrePresentacion = %s,
-            codigoPresentacion = %s
+        SET nombrePresentacion = %s, codigoPresentacion = %s
         WHERE idPresentacion = %s
     """, (nuevo_nombre, nuevo_codigo, idPresentacion))
     conn.commit()
     conn.close()
 
+def editar_parametro(idPP, inf, sup, unidad, tipo):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE presentacionparametro
+        SET limiteInferior=%s, limiteSuperior=%s, unidadMedida=%s, tipoParametro=%s
+        WHERE idPresentacionParametro=%s
+    """, (inf, sup, unidad, tipo, idPP))
+    conn.commit()
+    conn.close()
 
-# ------------------ ELIMINAR ------------------
+# ELIMINAR
 
 def eliminar_presentacion(idPresentacion):
     conn = get_connection()
@@ -86,162 +114,106 @@ def eliminar_linea(idLinea):
     conn.commit()
     conn.close()
 
+def eliminar_parametro(idPP):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM presentacionparametro WHERE idPresentacionParametro = %s", (idPP,))
+    conn.commit()
+    conn.close()
 
-# ==========================================================
 # INTERFAZ PRINCIPAL
-# ==========================================================
 
 def gestionar_lineas():
-    st.title("🧱 Gestión de Líneas de Producción")
+    st.title("Gestión de Líneas y Presentaciones")
     st.markdown("---")
 
     df_lineas = obtener_lineas()
 
-    # -------------------------------------------------------
-    # LISTA DE LÍNEAS
-    # -------------------------------------------------------
-    st.subheader("📋 Líneas Registradas")
+    # LÍNEAS – LISTAR / EDITAR / ELIMINAR / AGREGAR
 
-    if df_lineas.empty:
-        st.info("No hay líneas registradas.")
-    else:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Líneas registradas")
         st.dataframe(df_lineas, use_container_width=True)
 
-    st.markdown("---")
+        # Nuevo: editar línea
+        st.subheader("Editar Línea")
+        if not df_lineas.empty:
+            linea_sel_editar = st.selectbox("Seleccione línea", df_lineas["nombreLinea"], key="edit_linea")
+            idLinea_edit = int(df_lineas[df_lineas["nombreLinea"] == linea_sel_editar]["idLinea"].iloc[0])
 
-    # -------------------------------------------------------
-    # AGREGAR NUEVA LÍNEA
-    # -------------------------------------------------------
-    st.subheader("➕ Agregar Nueva Línea")
+            nuevo_nombre = st.text_input("Nuevo nombre", value=linea_sel_editar)
 
-    with st.form("form_linea_add", clear_on_submit=True):
-        nombre_linea = st.text_input("Nombre de la línea", placeholder="Ej: Línea Galletería")
-        guardar = st.form_submit_button("Guardar")
-
-        if guardar:
-            if not nombre_linea:
-                st.warning("Ingrese un nombre válido.")
-            elif nombre_linea.strip().lower() in df_lineas["nombreLinea"].str.lower().values:
-                st.error("Ya existe una línea con ese nombre.")
-            else:
-                insertar_linea(nombre_linea)
-                st.success(f"Línea '{nombre_linea}' agregada correctamente.")
+            if st.button("Actualizar línea"):
+                editar_linea(idLinea_edit, nuevo_nombre)
+                st.success("Línea actualizada")
                 st.rerun()
 
-    st.markdown("---")
+        # Nuevo: eliminar línea
+        st.subheader("Eliminar Línea")
+        if not df_lineas.empty:
+            linea_sel_del = st.selectbox("Seleccione línea a eliminar", df_lineas["nombreLinea"], key="del_linea")
+            idLinea_del = int(df_lineas[df_lineas["nombreLinea"] == linea_sel_del]["idLinea"].iloc[0])
 
-    # -------------------------------------------------------
-    # EDITAR O ELIMINAR LÍNEA
-    # -------------------------------------------------------
-    st.subheader("🛠 Editar o Eliminar Línea")
-
-    if not df_lineas.empty:
-        col1, col2 = st.columns(2)
-
-        with col1:
-            linea_sel = st.selectbox("Seleccione una línea", df_lineas["nombreLinea"])
-            idLinea = int(df_lineas.loc[df_lineas["nombreLinea"] == linea_sel, "idLinea"].iloc[0])
-
-            nuevo_nombre = st.text_input("Nuevo nombre", value=linea_sel)
-
-            if st.button("Guardar cambios"):
-                if nuevo_nombre.strip() == "":
-                    st.warning("El nombre no puede estar vacío.")
-                elif nuevo_nombre.strip().lower() in df_lineas["nombreLinea"].str.lower().values:
-                    st.error("Ya existe otra línea con ese nombre.")
-                else:
-                    editar_linea(idLinea, nuevo_nombre)
-                    st.success("Nombre actualizado correctamente.")
-                    st.rerun()
-
-        with col2:
-            df_present = obtener_presentaciones(idLinea)
             if st.button("Eliminar línea"):
-                if not df_present.empty:
-                    st.error("No se puede eliminar: la línea tiene presentaciones registradas.")
-                else:
-                    eliminar_linea(idLinea)
-                    st.warning(f"Línea '{linea_sel}' eliminada.")
-                    st.rerun()
+                eliminar_linea(idLinea_del)
+                st.warning("Línea eliminada")
+                st.rerun()
 
-    st.markdown("---")
+    with col2:
+        st.subheader("Nueva Línea")
+        with st.form("f_linea"):
+            nombre = st.text_input("Nombre")
+            if st.form_submit_button("Guardar"):
+                insertar_linea(nombre)
+                st.success("Registrado")
+                st.rerun()
 
-    # -------------------------------------------------------
     # PRESENTACIONES
-    # -------------------------------------------------------
+    st.markdown("---")
+    st.subheader("Presentaciones por Línea")
 
-    st.subheader("🎁 Administrar Presentaciones por Línea")
+    linea_sel = st.selectbox("Seleccione Línea", df_lineas["nombreLinea"])
+    idLinea = int(df_lineas[df_lineas["nombreLinea"] == linea_sel]["idLinea"].iloc[0])
 
-    if df_lineas.empty:
-        st.info("Debe registrar líneas primero.")
-        return
+    df_pres = obtener_presentaciones(idLinea)
+    col3, col4 = st.columns(2)
 
-    linea_pres = st.selectbox("Seleccione una línea para ver sus presentaciones", df_lineas["nombreLinea"], key="linea_pres")
+    with col3:
+        st.dataframe(df_pres, use_container_width=True)
 
-    idLinea_pres = int(df_lineas.loc[df_lineas["nombreLinea"] == linea_pres, "idLinea"].iloc[0])
+        # Editar presentación
+        st.subheader("Editar Presentación")
+        if not df_pres.empty:
+            pres_sel = st.selectbox("Presentación", df_pres["nombrePresentacion"])
+            fila = df_pres[df_pres["nombrePresentacion"] == pres_sel].iloc[0]
 
-    df_present = obtener_presentaciones(idLinea_pres)
+            nuevo_nombre = st.text_input("Nuevo nombre", value=fila["nombrePresentacion"])
+            nuevo_codigo = st.text_input("Nuevo código", value=fila["codigoPresentacion"])
 
-    st.markdown(f"### Presentaciones de **{linea_pres}**")
-
-    if df_present.empty:
-        st.info("No hay presentaciones registradas.")
-    else:
-        st.dataframe(df_present, use_container_width=True)
-
-    # -----------------------------------------
-    # AGREGAR PRESENTACIÓN
-    # -----------------------------------------
-    st.markdown("#### ➕ Agregar Presentación")
-
-    with st.form("form_present_add", clear_on_submit=True):
-        nombre_present = st.text_input("Nombre de presentación", placeholder="Ej: Caja 12u, Bolsa 90g")
-        codigo_present = st.text_input("Código de presentación", placeholder="Ej: GAL-12U, CHO-90B")
-
-        add_pres = st.form_submit_button("Agregar")
-
-        if add_pres:
-            if not nombre_present or not codigo_present:
-                st.warning("Complete todos los campos.")
-            elif codigo_present.strip().lower() in df_present["codigoPresentacion"].str.lower().dropna().values:
-                st.error("Ese código ya existe en esta línea.")
-            else:
-                insertar_presentacion(nombre_present, codigo_present, idLinea_pres)
-                st.success("Presentación registrada.")
+            if st.button("Actualizar presentación"):
+                editar_presentacion(fila["idPresentacion"], nuevo_nombre, nuevo_codigo)
+                st.success("Actualizado")
                 st.rerun()
 
-    # -----------------------------------------
-    # EDITAR PRESENTACIÓN
-    # -----------------------------------------
-    if not df_present.empty:
-        st.markdown("#### 🛠 Editar Presentación")
+        # Eliminar presentación
+        st.subheader("Eliminar Presentación")
+        if not df_pres.empty:
+            pres_del = st.selectbox("Eliminar", df_pres["nombrePresentacion"], key="del_pres")
+            idPres_del = int(df_pres[df_pres["nombrePresentacion"] == pres_del]["idPresentacion"].iloc[0])
 
-        pres_sel = st.selectbox("Seleccionar presentación", df_present["nombrePresentacion"])
-
-        idPresent = int(df_present.loc[df_present["nombrePresentacion"] == pres_sel, "idPresentacion"].iloc[0])
-        codigo_actual = df_present.loc[df_present["nombrePresentacion"] == pres_sel, "codigoPresentacion"].iloc[0]
-
-        nuevo_pres = st.text_input("Nuevo nombre", value=pres_sel, key="edit_pres")
-        nuevo_codigo = st.text_input("Nuevo código", value=codigo_actual, key="edit_cod")
-
-        if st.button("Guardar cambios presentación"):
-            if nuevo_pres.strip() == "" or nuevo_codigo.strip() == "":
-                st.warning("Todos los campos son obligatorios.")
-            else:
-                editar_presentacion(idPresent, nuevo_pres, nuevo_codigo)
-                st.success("Presentación actualizada.")
+            if st.button("Eliminar presentación"):
+                eliminar_presentacion(idPres_del)
+                st.warning("Eliminado")
                 st.rerun()
 
-    # -----------------------------------------
-    # ELIMINAR PRESENTACIÓN
-    # -----------------------------------------
-    if not df_present.empty:
-        st.markdown("#### 🗑 Eliminar Presentación")
-
-        pres_del = st.selectbox("Seleccione una presentación para eliminar", df_present["nombrePresentacion"], key="delete_pres")
-        idPresDel = int(df_present.loc[df_present["nombrePresentacion"] == pres_del, "idPresentacion"].iloc[0])
-
-        if st.button("Eliminar presentación"):
-            eliminar_presentacion(idPresDel)
-            st.warning(f"Presentación '{pres_del}' eliminada.")
-            st.rerun()
+    with col4:
+        st.subheader("Nueva Presentación")
+        with st.form("f_pres"):
+            nombre = st.text_input("Nombre presentación")
+            codigo = st.text_input("Código presentación")
+            if st.form_submit_button("Guardar"):
+                insertar_presentacion(nombre, codigo, idLinea)
+                st.success("Registrado")
+                st.rerun()
