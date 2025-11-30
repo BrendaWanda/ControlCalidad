@@ -3,9 +3,7 @@ import pandas as pd
 from datetime import date
 from database.db_connection import get_connection
 
-# =====================================================
 # FUNCIONES DE BASE DE DATOS
-# =====================================================
 
 def obtener_lineas():
     conn = get_connection()
@@ -156,8 +154,8 @@ def obtener_detalles(idOrden):
 
 
 def actualizar_detalle(idDetalle, idPresentacion, receta, fechaVencimiento, lote,
-                       observacion, rendimientoReceta, rendimientoCajasB,
-                       produccionUnidades, produccionCajasB):
+                        observacion, rendimientoReceta, rendimientoCajasB,
+                        produccionUnidades, produccionCajasB):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -173,8 +171,8 @@ def actualizar_detalle(idDetalle, idPresentacion, receta, fechaVencimiento, lote
             produccionCajasB = %s
         WHERE idDetalle = %s
     """, (idPresentacion, receta, fechaVencimiento, lote,
-          observacion, rendimientoReceta, rendimientoCajasB,
-          produccionUnidades, produccionCajasB, idDetalle))
+            observacion, rendimientoReceta, rendimientoCajasB,
+            produccionUnidades, produccionCajasB, idDetalle))
     conn.commit()
     conn.close()
 
@@ -186,10 +184,7 @@ def eliminar_detalle(idDetalle):
     conn.commit()
     conn.close()
 
-
-# =====================================================
 # INTERFAZ STREAMLIT
-# =====================================================
 
 def gestionar_ordenes():
 
@@ -203,9 +198,7 @@ def gestionar_ordenes():
 
     menu = st.sidebar.radio("Menú de Órdenes", ["Registrar Nueva Orden", "Consultar Órdenes"])
 
-    # =====================================================
     # REGISTRAR NUEVA ORDEN
-    # =====================================================
     if menu == "Registrar Nueva Orden":
 
         st.subheader("Nueva Orden de Producción")
@@ -252,9 +245,7 @@ def gestionar_ordenes():
                 st.success(f"Orden {codigoorden} creada.")
                 st.rerun()
 
-        # =====================================================
         # FORMULARIO DE DETALLES (para la orden recién creada)
-        # =====================================================
 
         if "orden_activa" in st.session_state:
 
@@ -304,9 +295,7 @@ def gestionar_ordenes():
             else:
                 st.dataframe(detalles_df, use_container_width=True)
 
-    # =====================================================
     # CONSULTAR ÓRDENES
-    # =====================================================
     elif menu == "Consultar Órdenes":
 
         st.subheader("Consultar Órdenes de Producción")
@@ -319,9 +308,7 @@ def gestionar_ordenes():
 
         df_ordenes["fecha"] = pd.to_datetime(df_ordenes["fecha"]).dt.date
 
-        # ============================
         # FILTROS ORGANIZADOS
-        # ============================
 
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -345,15 +332,11 @@ def gestionar_ordenes():
         with col5:
             linea_filtro = st.selectbox("Línea", ["Todas"] + [l[1] for l in lineas])
 
-        # ============================
         # BUSCADOR
-        # ============================
 
         codigo_buscar = st.text_input("Buscar por Código de Orden")
 
-        # ============================
         # APLICAR FILTROS
-        # ============================
 
         df_filtrado = df_ordenes.copy()
 
@@ -375,9 +358,7 @@ def gestionar_ordenes():
         if codigo_buscar:
             df_filtrado = df_filtrado[df_filtrado["codigoOrden"].str.contains(codigo_buscar, case=False, na=False)]
 
-        # ============================
         # RESULTADOS (tabla + expanders por fila)
-        # ============================
 
         st.markdown("### Órdenes encontradas")
 
@@ -411,7 +392,7 @@ def gestionar_ordenes():
 
                 st.markdown("---")
 
-                # ---------- DETALLES ----------
+                # Detalles
                 detalles_df = obtener_detalles(idOrden)
 
                 if detalles_df.empty:
@@ -491,7 +472,7 @@ def gestionar_ordenes():
 
                 st.markdown("---")
 
-                # ---------- FORMULARIO AGREGAR NUEVO DETALLE A LA ORDEN ----------
+                # Formulario para agregar nurvo detalle
                 st.markdown("#### Agregar nuevo detalle a esta orden")
                 presentaciones_linea = obtener_presentaciones_linea(orden.get("idLinea"))
                 opciones_new = {p[1]: p[0] for p in presentaciones_linea} if presentaciones_linea else {}
@@ -536,7 +517,7 @@ def gestionar_ordenes():
 
                 st.markdown("---")
 
-                # ---------- EDICION ORDEN ----------
+                # Edicion orden de produccion
                 st.markdown("#### Editar datos de la orden")
                 with st.form(f"form_edit_orden_{idOrden}", clear_on_submit=False):
                     codigo_new = st.text_input("Código de Orden", value=orden.get("codigoOrden"))
@@ -573,7 +554,7 @@ def gestionar_ordenes():
 
                 st.markdown("---")
 
-                # ---------- ELIMINAR ORDEN ----------
+                # Eliminar orden de produccion
                 if st.button(f"Eliminar ORDEN {orden.get('codigoOrden')}", key=f"elim_ord_{idOrden}"):
                     try:
                         eliminar_orden(idOrden)
@@ -584,9 +565,7 @@ def gestionar_ordenes():
 
         st.markdown("---")
 
-# =====================================================
 # EJECUCIÓN DIRECTA
-# =====================================================
 
 if __name__ == "__main__":
     gestionar_ordenes()
