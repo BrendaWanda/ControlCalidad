@@ -64,7 +64,7 @@ def obtener_parametros():
 
 def ver_graficos_alertas():
     st.set_page_config(page_title="Alertas de Calidad", layout="wide")
-    st.title("🚨 Reporte de Alertas de Calidad")
+    st.title("Reporte de Alertas de Calidad")
     st.caption("Monitoreo de desviaciones fuera de límites")
     st.markdown("---")
 
