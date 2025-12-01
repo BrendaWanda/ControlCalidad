@@ -39,7 +39,6 @@ def ver_registros_guardados():
 
     #  1) ORDEN
     col1, col2, col3 = st.columns(3)
-
     with col1:
         orden = st.selectbox(
             "Orden",
