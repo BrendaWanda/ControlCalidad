@@ -358,7 +358,7 @@ def gestionar_ordenes():
         if codigo_buscar:
             df_filtrado = df_filtrado[df_filtrado["codigoOrden"].str.contains(codigo_buscar, case=False, na=False)]
 
-        # RESULTADOS (tabla + expanders por fila)
+        # RESULTADOS
 
         st.markdown("### Órdenes encontradas")
 
@@ -424,7 +424,7 @@ def gestionar_ordenes():
                                         st.error(f"Error al eliminar detalle: {e}")
 
                             with col_b:
-                                # --- Formulario para editar detalle ---
+                                # Formulario para editar detalle
                                 if st.button(f"Editar detalle {idDetalle}", key=f"edit_det_btn_{idDetalle}"):
                                     presentaciones = obtener_presentaciones_linea(orden.get("idLinea"))
                                     opciones_pres = {p[1]: p[0] for p in presentaciones} if presentaciones else {}

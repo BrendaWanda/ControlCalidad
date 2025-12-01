@@ -6,7 +6,7 @@ from database.db_connection import get_connection
 import plotly.graph_objects as go
 from io import BytesIO
 
-# I-MR constants for n=2 (moving range between consecutive pairs)
+# I-MR constants for n=2 
 D2_N2 = 1.128
 D4_N2 = 3.267
 D3_N2 = 0.0
@@ -105,7 +105,7 @@ def detectar_fuera_de_control(x_series, stats):
     idx = list(np.where(mask)[0])
     return mask, idx
 
-# ------------------- Plot -------------------
+# Plot
 def plot_I_MR(df_subset, titulo, limite_inf=None, limite_sup=None):
     if df_subset.empty:
         return None, None, [], None, []
@@ -183,7 +183,7 @@ def plot_I_MR(df_subset, titulo, limite_inf=None, limite_sup=None):
 
     return fig_i, fig_mr, ooc_indices, stats, spec_indices
 
-# ------------------- Streamlit app -------------------
+# Streamlit app
 def app_graficos_control():
     st.set_page_config(page_title="Gráficos de Control", layout="wide")
     st.title("Gráficos de Control — I-MR (Línea → Presentación → Tipo → Parámetro)")
@@ -203,7 +203,7 @@ def app_graficos_control():
 
     # Sidebar - cascade filters
     with st.sidebar:
-        st.header("Filtros (cascada)")
+        st.header("Filtros")
 
         # 1) Línea
         line_map = {}
@@ -368,7 +368,7 @@ def app_graficos_control():
         csv = df_f.to_csv(index=False).encode('utf-8')
         st.download_button("Descargar CSV (datos filtrados)", data=csv, file_name="controles_filtrados.csv", mime="text/csv", key="dl_csv_filtrados")
 
-    # --- combos para graficar ---
+    # combos para graficar
     combos = []
     if agrupar:
         combos = df_f[['idParametro','idPresentacion','idLinea','nombreParametro','nombreLinea']].drop_duplicates().to_dict('records')

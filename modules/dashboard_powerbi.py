@@ -89,7 +89,7 @@ def to_excel_bytes(df: pd.DataFrame) -> bytes:
 # Dashboard principal 
 def dashboard_powerbi_module():
     st.set_page_config(page_title="Dashboard (PowerBI-like)", layout="wide")
-    st.title("Dashboard — Visualización dinámica desde la base de datos")
+    st.title("Dashboard Dinamico")
 
     tablas = cargar_tablas_dashboard()
     df_ctrl = tablas['controles']

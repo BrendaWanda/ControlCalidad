@@ -116,7 +116,7 @@ def registrar_control():
         cur = conn.cursor()
         try:
             for id_param, data in entradas.items():
-                # Insert control
+                # Insertar control
                 insert_control_record(cur, fecha_hora, data["valor"], observaciones, id_usuario,
                                         id_param, id_tipo, id_linea, id_detalle, id_orden, id_presentacion)
                 conn.commit()
@@ -131,7 +131,6 @@ def registrar_control():
                             save_alert(cur, "Fuera de Rango", descripcion, id_control, id_orden, id_linea, id_param, id_presentacion, data["valor"], data["lim_inf"], data["lim_sup"])
                             conn.commit()
                     except Exception:
-                        # silently continue on cast errors
                         pass
                 elif data["tipo"] == "check":
                     if data["valor"] == 0:

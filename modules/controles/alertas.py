@@ -30,9 +30,7 @@ def ver_alertas():
 
     st.subheader("Filtros")
 
-    # ============================================================
     # 1) ORDEN
-    # ============================================================
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -45,9 +43,7 @@ def ver_alertas():
     if orden_sel != "Todas":
         df_fil = df_fil[df_fil["codigoOrden"] == orden_sel]
 
-    # ============================================================
     # 2) LÍNEA
-    # ============================================================
     with col2:
         lineas_disp = sorted(df_fil["nombreLinea"].dropna().unique().tolist())
         linea_sel = st.selectbox("Línea", ["Todas"] + lineas_disp)
@@ -55,9 +51,7 @@ def ver_alertas():
     if linea_sel != "Todas":
         df_fil = df_fil[df_fil["nombreLinea"] == linea_sel]
 
-    # ============================================================
     # 3) PRESENTACIÓN
-    # ============================================================
     with col3:
         present_disp = sorted(df_fil["nombrePresentacion"].dropna().unique().tolist())
         present_sel = st.selectbox("Presentación", ["Todas"] + present_disp)
@@ -65,9 +59,7 @@ def ver_alertas():
     if present_sel != "Todas":
         df_fil = df_fil[df_fil["nombrePresentacion"] == present_sel]
 
-    # ============================================================
     # 4) TIPO DE CONTROL
-    # ============================================================
     col4 = st.columns(1)[0]
     with col4:
         tipo_disp = sorted(df_fil["tipoControl"].dropna().unique().tolist())
@@ -76,9 +68,7 @@ def ver_alertas():
     if tipo_sel != "Todos":
         df_fil = df_fil[df_fil["tipoControl"] == tipo_sel]
 
-    # ============================================================
     # 5) PARÁMETRO (DEPENDIENTE)
-    # ============================================================
     col5 = st.columns(1)[0]
     with col5:
         param_disp = sorted(df_fil["nombreParametro"].dropna().unique().tolist())
@@ -87,9 +77,7 @@ def ver_alertas():
     if param_sel != "Todos":
         df_fil = df_fil[df_fil["nombreParametro"] == param_sel]
 
-    # ============================================================
     # 6) ESTADO (se mantiene como filtro adicional)
-    # ============================================================
     col6 = st.columns(1)[0]
     with col6:
         estado_disp = sorted(df["estado"].dropna().unique().tolist())
@@ -98,15 +86,11 @@ def ver_alertas():
     if estado_sel != "Todos":
         df_fil = df_fil[df_fil["estado"] == estado_sel]
 
-    # ============================================================
     #  RESULTADOS
-    # ============================================================
     st.subheader("Resultados")
     st.dataframe(df_fil, use_container_width=True)
 
-    # ============================================================
     #  CONFIRMAR / CERRAR ALERTA
-    # ============================================================
     st.markdown("### Confirmar / Cerrar Alerta")
 
     id_alerta = st.text_input("ID de alerta para confirmar/cerrar")

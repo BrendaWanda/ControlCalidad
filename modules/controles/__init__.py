@@ -1,7 +1,3 @@
-"""
-modules.controles
-Entry point for the Control de Calidad module.
-"""
 from .registrar import registrar_control
 from .buscar import ver_registros_guardados
 from .alertas import ver_alertas

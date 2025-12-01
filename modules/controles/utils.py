@@ -25,7 +25,6 @@ def insert_control_record(cursor, fecha_hora, resultado, observaciones, id_usuar
 
 def save_alert(cursor, tipo, descripcion, id_control=None, id_orden=None, id_linea=None,
                 id_param=None, id_presentacion=None, valor=None, lim_inf=None, lim_sup=None, estado="pendiente"):
-    # Try insert with extended columns; fallback to minimal insert if schema differs
     try:
         cursor.execute("""
             INSERT INTO alerta
@@ -38,7 +37,6 @@ def save_alert(cursor, tipo, descripcion, id_control=None, id_orden=None, id_lin
                         (tipo, descripcion, id_control, estado))
 
 def get_user_id_from_session():
-    # Flexible extraction: many possible session_state shapes
     if "usuario_id" in st.session_state:
         return st.session_state["usuario_id"]
     if "idUsuario" in st.session_state:
