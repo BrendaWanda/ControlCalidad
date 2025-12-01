@@ -3,11 +3,11 @@ from modules import (
     usuarios, controles, graficos_control, graficos_alertas, reportes, estandares,
     ordenes, gestion_usuarios, dashboard_powerbi, lineas
 )
-from modules.styles import cargar_estilos  # <<<<<< agregado
+from modules.styles import cargar_estilos  # agregado
 
 # FUNCIÓN PRINCIPAL
 def main():
-    cargar_estilos()  # <<<<<< agregado
+    cargar_estilos()  # agregado
 
     # Si no hay usuario logueado → mostrar login
     if "usuario" not in st.session_state:

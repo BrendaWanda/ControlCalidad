@@ -13,7 +13,7 @@ BACKGROUND_COLOR = "#0E0E10"
 def login():
     st.set_page_config(
         page_title="Sistema de Control de Calidad - Gustossi",
-        page_icon="🍪",
+        page_icon="B",
         layout="centered"
     )
 
@@ -70,7 +70,7 @@ def login():
     st.markdown("<h3>Industrias Alimenticias Gustossi S.R.L.</h3>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Contenedor principal (Formulario + Imagen)
+    # Contenedor principal 
     col1, col2 = st.columns([1, 1])
 
     with col1:

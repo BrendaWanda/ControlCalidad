@@ -4,9 +4,7 @@ def cargar_estilos():
     st.markdown("""
         <style>
 
-        /* ==========================
-           PALETA DE COLORES
-        ========================== */
+        /* PALETA DE COLORES*/
         :root {
             --azul-oscuro: #0A192F;       /* Fondo principal */
             --azul-card: #112240;         /* Tarjetas y campos */
@@ -16,33 +14,25 @@ def cargar_estilos():
             --rojo: #FF4C4C;              /* Botones / Acentos */
         }
 
-        /* ==========================
-           FONDO GENERAL
-        ========================== */
+        /* FONDO GENERAL*/
         body, .main {
             background-color: var(--azul-oscuro) !important;
             color: var(--texto) !important;
         }
 
-        /* ==========================
-           SIDEBAR
-        ========================== */
+        /* SIDEBAR*/
         section[data-testid="stSidebar"] {
             background-color: #07111F !important;
             border-right: 1px solid var(--borde) !important;
         }
 
-        /* ==========================
-           TÍTULOS
-        ========================== */
+        /* TÍTULOS*/
         h1, h2, h3, h4, h5, h6 {
             color: var(--texto) !important;
             font-weight: 700 !important;
         }
 
-        /* ==========================
-           CONTENEDORES (tarjetas)
-        ========================== */
+        /* CONTENEDORES*/
         .stContainer, .stTabs [data-baseweb="tab"] {
             background-color: var(--azul-card) !important;
             border-radius: 12px !important;
@@ -50,9 +40,7 @@ def cargar_estilos():
             border: 1px solid var(--borde) !important;
         }
 
-        /* ==========================
-           TAB SELECCIONADA
-        ========================== */
+        /* TAB SELECCIONADA*/
         .stTabs [aria-selected="true"] {
             background-color: var(--rojo) !important;
             color: white !important;
@@ -60,9 +48,7 @@ def cargar_estilos():
             border-radius: 10px !important;
         }
 
-        /* ==========================
-           BOTONES
-        ========================== */
+        /* BOTONES*/
         .stButton>button {
             background: linear-gradient(90deg, var(--rojo), #B30000) !important;
             color: white !important;
@@ -78,9 +64,7 @@ def cargar_estilos():
             transform: scale(1.03);
         }
 
-        /* ==========================
-           INPUTS (cajas de texto, select)
-        ========================== */
+        /* INPUTS (cajas de texto, select)*/
         .stTextInput>div>div>input,
         .stSelectbox>div>div>div,
         .stNumberInput>div>div>input {
@@ -90,9 +74,7 @@ def cargar_estilos():
             border: 1px solid var(--borde) !important;
         }
 
-        /* ==========================
-            DATAFRAME
-        ========================== */
+        /* DATAFRAME*/
         .dataframe {
             background-color: var(--azul-card) !important;
             color: var(--texto) !important;

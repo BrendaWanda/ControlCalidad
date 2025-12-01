@@ -1,6 +1,3 @@
-"""
-Alertas: ver historial, filtrar y confirmar.
-"""
 import streamlit as st
 from .utils import get_conn
 import pandas as pd

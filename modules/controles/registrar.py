@@ -1,6 +1,3 @@
-"""
-Registrar controles: flujo Orden -> Detalle -> Presentación -> Tipo -> Parámetros
-"""
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -121,7 +118,7 @@ def registrar_control():
             for id_param, data in entradas.items():
                 # Insert control
                 insert_control_record(cur, fecha_hora, data["valor"], observaciones, id_usuario,
-                                      id_param, id_tipo, id_linea, id_detalle, id_orden, id_presentacion)
+                                        id_param, id_tipo, id_linea, id_detalle, id_orden, id_presentacion)
                 conn.commit()
                 id_control = cur.lastrowid
 

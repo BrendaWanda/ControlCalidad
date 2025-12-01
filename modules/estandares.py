@@ -1,18 +1,9 @@
-# modules/estandares.py
-"""
-Gestión de Estándares por Línea → Presentación → Tipo de Control
-Interfaz mejorada visualmente por "cuadrantes" y panel de edición/eliminación por parámetro.
-Usa database.db_connection.get_connection()
-"""
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 from database.db_connection import get_connection
 
-# ==========================================================
-# FUNCIONES DE BASE DE DATOS (igual que antes, con pequeños guards)
-# ==========================================================
+# FUNCIONES DE BASE DE DATOS
 
 def obtener_lineas_produccion():
     conn = get_connection()
@@ -177,9 +168,7 @@ def actualizar_parametro(id_parametro, nombre, descripcion, unidad, lim_inf, lim
         conn.close()
 
 
-# ---------------------------
 # PRESENTACIONES
-# ---------------------------
 
 def obtener_presentaciones_por_linea(id_linea):
     conn = get_connection()
@@ -271,10 +260,7 @@ def eliminar_parametro_presentacion(id_pp):
         cursor.close()
         conn.close()
 
-
-# ==========================================================
 # INTERFAZ STREAMLIT (MEJORADA)
-# ==========================================================
 
 def configurar_parametros():
     st.set_page_config(page_title="Configuración de Estándares", layout="wide")
@@ -284,9 +270,7 @@ def configurar_parametros():
     # Menú superior simple
     menu = st.radio("Panel", ["Tipos de Control", "Parámetros de Calidad por Presentación"], horizontal=True)
 
-    # -----------------
     # TIPOS DE CONTROL (panel simple, lista editable)
-    # -----------------
     if menu == "Tipos de Control":
         st.subheader("Gestión de Tipos de Control")
         lineas = obtener_lineas_produccion()
@@ -350,19 +334,16 @@ def configurar_parametros():
             else:
                 st.info("No hay tipos de control registrados aún.")
 
-    # -----------------
     # PARÁMETROS POR PRESENTACIÓN (UI en cuadrantes)
-    # -----------------
     else:
         st.subheader("Parámetros de Calidad por Presentación (cuadrantes)")
 
-        # --- Obtener líneas y presentaciones ---
+        # Obtener líneas y presentaciones
         lineas = obtener_lineas_produccion()
         if not lineas:
             st.info("No hay líneas de producción registradas.")
             return
 
-        # LAYOUT: dos columnas principales (izq controles, der panel de parámetros)
         left_col, right_col = st.columns([1, 2])
 
         # LEFT TOP: selección cascade
@@ -522,9 +503,7 @@ def configurar_parametros():
                 }), use_container_width=True)
 
                 csv = df_assigned.to_csv(index=False).encode('utf-8')
-                st.download_button("📥 Descargar CSV (asignados)", data=csv, file_name="parametros_asignados.csv", mime="text/csv")
-
-    # fin de interfaz
+                st.download_button("Descargar CSV (asignados)", data=csv, file_name="parametros_asignados.csv", mime="text/csv")
 
 if __name__ == "__main__":
     configurar_parametros()

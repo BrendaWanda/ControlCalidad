@@ -1,10 +1,3 @@
-# modules/dashboard_powerbi.py
-"""
-Dashboard 'PowerBI-like' hecho con Streamlit + Plotly, dinámico desde tu BD.
-Filtros en cascada: Línea -> Presentación -> Tipo de control -> Parámetro
-Requiere: database.db_connection.get_connection()
-"""
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -14,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from io import BytesIO
 
-# -------------------- Carga de tablas (cacheadas) --------------------
+# Carga de tablas
 @st.cache_data(ttl=300)
 def cargar_tablas_dashboard():
     conn = get_connection()
@@ -80,7 +73,7 @@ def cargar_tablas_dashboard():
     return tablas
 
 
-# -------------------- Utilidades --------------------
+# Utilidades
 def safe_str(v):
     return "" if pd.isna(v) else str(v)
 
@@ -93,10 +86,10 @@ def to_excel_bytes(df: pd.DataFrame) -> bytes:
     return output.getvalue()
 
 
-# -------------------- Dashboard principal --------------------
+# Dashboard principal 
 def dashboard_powerbi_module():
     st.set_page_config(page_title="Dashboard (PowerBI-like)", layout="wide")
-    st.title("📊 Dashboard — Visualización dinámica desde la base de datos")
+    st.title("Dashboard — Visualización dinámica desde la base de datos")
 
     tablas = cargar_tablas_dashboard()
     df_ctrl = tablas['controles']
@@ -107,9 +100,7 @@ def dashboard_powerbi_module():
     lineas = tablas['lineaproduccion']
     df_alertas = tablas.get('alerta', pd.DataFrame())
 
-    # ---------------------------------------
     # Sidebar: filtros en cascada
-    # ---------------------------------------
     with st.sidebar:
         st.header("Filtros (cascada)")
 
@@ -217,7 +208,7 @@ def dashboard_powerbi_module():
             # simple workaround: recargar la página para limpiar widget states
             st.experimental_rerun()
 
-    # -------------------- Aplicar filtros sobre df_ctrl --------------------
+    # Aplicar filtros sobre df_ctrl
     df_f = df_ctrl.copy()
 
     # fecha
@@ -235,9 +226,7 @@ def dashboard_powerbi_module():
     if param_sel:
         df_f = df_f[df_f['idParametro'].isin(param_sel)]
 
-    # ---------------------------------------
     # KPIs (fila superior) - 5 tarjetas
-    # ---------------------------------------
     total_mediciones = len(df_f)
     mean_val = float(df_f['resultado'].mean()) if (not df_f.empty and 'resultado' in df_f.columns) else np.nan
     median_val = float(df_f['resultado'].median()) if (not df_f.empty and 'resultado' in df_f.columns) else np.nan
@@ -246,7 +235,7 @@ def dashboard_powerbi_module():
         out_of_spec = int(((df_f['resultado'] < df_f['limiteInferior']) | (df_f['resultado'] > df_f['limiteSuperior'])).sum())
     alert_count = len(df_alertas) if agregar_alertas and not df_alertas.empty else 0
 
-    # Display KPIs in cards (use columns)
+    # Display KPIs in cards 
     k1, k2, k3, k4, k5 = st.columns([1.2,1.2,1.2,1.2,1.2])
     k1.metric(label="Total mediciones", value=f"{total_mediciones:,}")
     k2.metric(label="Media (resultado)", value=f"{mean_val:.2f}" if not np.isnan(mean_val) else "—")
@@ -256,9 +245,7 @@ def dashboard_powerbi_module():
 
     st.markdown("---")
 
-    # ---------------------------------------
     # Gráficas (fila principal) - 3 columnas
-    # ---------------------------------------
     col1, col2, col3 = st.columns([1.1,1.1,1.0])
 
     # 1) Serie temporal: resultados en el tiempo (por parámetro si hay varios)
@@ -295,7 +282,7 @@ def dashboard_powerbi_module():
                 # download PNG
                 try:
                     png = fig_ts.to_image(format="png")
-                    st.download_button("📥 Descargar Serie (PNG)", data=png, file_name="serie_temporal.png", mime="image/png")
+                    st.download_button("Descargar Serie (PNG)", data=png, file_name="serie_temporal.png", mime="image/png")
                 except Exception:
                     st.caption("Instala 'kaleido' para descargar PNG (pip install -U kaleido).")
 
@@ -328,7 +315,7 @@ def dashboard_powerbi_module():
                 st.plotly_chart(fig_bar, use_container_width=True)
                 try:
                     pngb = fig_bar.to_image(format="png")
-                    st.download_button("📥 Descargar Barra (PNG)", data=pngb, file_name="barra_promedios.png", mime="image/png")
+                    st.download_button("Descargar Barra (PNG)", data=pngb, file_name="barra_promedios.png", mime="image/png")
                 except Exception:
                     st.caption("Instala 'kaleido' para descargar PNG (pip install -U kaleido).")
 
@@ -359,21 +346,19 @@ def dashboard_powerbi_module():
 
     st.markdown("---")
 
-    # ---------------------------------------
     # Tabla detallada y descarga
-    # ---------------------------------------
     if mostrar_tabla:
         st.subheader("Tabla: Datos filtrados")
         st.dataframe(df_f.sort_values('fechaControl').reset_index(drop=True))
 
         # Descargar CSV / Excel
         csv = df_f.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Descargar CSV", data=csv, file_name="dashboard_datos_filtrados.csv", mime="text/csv")
+        st.download_button("Descargar CSV", data=csv, file_name="dashboard_datos_filtrados.csv", mime="text/csv")
 
         # Excel (revisar openpyxl)
         try:
             excel_bytes = to_excel_bytes(df_f.sort_values('fechaControl').reset_index(drop=True))
-            st.download_button("📘 Descargar Excel", data=excel_bytes, file_name="dashboard_datos_filtrados.xlsx",
+            st.download_button("Descargar Excel", data=excel_bytes, file_name="dashboard_datos_filtrados.xlsx",
                                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         except Exception:
             st.info("Para descargar Excel instala 'openpyxl' (pip install openpyxl).")

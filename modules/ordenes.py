@@ -565,7 +565,5 @@ def gestionar_ordenes():
 
         st.markdown("---")
 
-# EJECUCIÓN DIRECTA
-
 if __name__ == "__main__":
     gestionar_ordenes()

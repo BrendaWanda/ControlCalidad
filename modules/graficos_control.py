@@ -1,16 +1,3 @@
-# modules/graficos_control.py
-"""
-Gráficos de Control I-MR con filtros en cascada (Línea -> Presentación -> Tipo -> Parámetro)
-Funciona con las tablas:
-- controlcalidad (registros)
-- parametrocalidad (definición de parámetros: idParametro, idPresentacion, idTipoControl, limiteInferior, limiteSuperior, ...)
-- presentacionproducto (idPresentacion, nombrePresentacion, idLinea)
-- presentaciontipocontrol (idPresentacion, idTipoControl)
-- tipocontrol (idTipoControl, nombreTipo, idLinea)
-- lineaproduccion (idLinea, nombreLinea)
-- detalleordentrabajo (idDetalle, idPresentacion, lote)
-Requiere database.db_connection.get_connection()
-"""
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -24,7 +11,7 @@ D2_N2 = 1.128
 D4_N2 = 3.267
 D3_N2 = 0.0
 
-# ------------------- Data loading -------------------
+# Data loading
 @st.cache_data(ttl=300)
 def cargar_tablas():
     conn = get_connection()
@@ -94,7 +81,7 @@ def cargar_tablas():
     conn.close()
     return tablas
 
-# ------------------- Helper statistics -------------------
+# Helper statistics
 def calcular_limits_I_MR(series):
     x = np.array(series.dropna(), dtype=float)
     if x.size == 0:
@@ -199,7 +186,7 @@ def plot_I_MR(df_subset, titulo, limite_inf=None, limite_sup=None):
 # ------------------- Streamlit app -------------------
 def app_graficos_control():
     st.set_page_config(page_title="Gráficos de Control", layout="wide")
-    st.title("📊 Gráficos de Control — I-MR (Línea → Presentación → Tipo → Parámetro)")
+    st.title("Gráficos de Control — I-MR (Línea → Presentación → Tipo → Parámetro)")
 
     tablas = cargar_tablas()
     df = tablas['controles']
@@ -350,7 +337,7 @@ def app_graficos_control():
         mostrar_todo = st.checkbox("Mostrar tabla de datos filtrada", value=False, key="f_mostrar")
         download_csv = st.checkbox("Añadir botón para descargar CSV", value=True, key="f_csv")
 
-    # ------------------- Aplicar filtros a df -------------------
+    # Aplicar filtros a df
     df_f = df.copy()
 
     # fecha
@@ -379,7 +366,7 @@ def app_graficos_control():
 
     if download_csv:
         csv = df_f.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Descargar CSV (datos filtrados)", data=csv, file_name="controles_filtrados.csv", mime="text/csv", key="dl_csv_filtrados")
+        st.download_button("Descargar CSV (datos filtrados)", data=csv, file_name="controles_filtrados.csv", mime="text/csv", key="dl_csv_filtrados")
 
     # --- combos para graficar ---
     combos = []
@@ -441,7 +428,7 @@ def app_graficos_control():
             # download png
             try:
                 png_i = fig_i.to_image(format="png")
-                st.download_button(label="📥 Descargar I-Chart (PNG)", data=png_i, file_name=f"IChart_{unique_base}.png", mime="image/png", key=f"dl_i_{unique_base}")
+                st.download_button(label="Descargar I-Chart (PNG)", data=png_i, file_name=f"IChart_{unique_base}.png", mime="image/png", key=f"dl_i_{unique_base}")
             except Exception:
                 st.info("Para descargar PNG instala 'kaleido' (pip install -U kaleido).")
 
@@ -449,7 +436,7 @@ def app_graficos_control():
             st.plotly_chart(fig_mr, use_container_width=True, key=f"fig_mr_{unique_base}")
             try:
                 png_mr = fig_mr.to_image(format="png")
-                st.download_button(label="📥 Descargar MR-Chart (PNG)", data=png_mr, file_name=f"MRChart_{unique_base}.png", mime="image/png", key=f"dl_mr_{unique_base}")
+                st.download_button(label="Descargar MR-Chart (PNG)", data=png_mr, file_name=f"MRChart_{unique_base}.png", mime="image/png", key=f"dl_mr_{unique_base}")
             except Exception:
                 st.info("Para descargar PNG instala 'kaleido' (pip install -U kaleido).")
 
@@ -457,7 +444,7 @@ def app_graficos_control():
         try:
             out = BytesIO()
             sel_df.sort_values('fechaControl').reset_index(drop=True).to_excel(out, index=False)
-            st.download_button(label="📘 Descargar Datos (Excel)", data=out.getvalue(), file_name=f"Datos_{unique_base}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key=f"dl_xlsx_{unique_base}")
+            st.download_button(label="Descargar Datos (Excel)", data=out.getvalue(), file_name=f"Datos_{unique_base}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key=f"dl_xlsx_{unique_base}")
         except Exception as e:
             st.info("Para descargar Excel instala 'openpyxl' (pip install openpyxl).")
 
@@ -489,6 +476,5 @@ def app_graficos_control():
     st.markdown("---")
     st.caption("Límites de especificación (verde punteado). Puntos fuera de especificación: diamantes rojos. Fuera de control (I-MR): cruz roja.")
 
-# Ejecutable directo
 if __name__ == "__main__":
     app_graficos_control()

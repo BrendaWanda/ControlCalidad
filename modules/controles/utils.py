@@ -1,9 +1,3 @@
-"""
-Utilities for modules.controles:
-- DB helpers
-- insert/save helpers
-- session user extraction
-"""
 import pandas as pd
 import streamlit as st
 from database.db_connection import get_connection
